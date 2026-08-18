@@ -1,0 +1,30 @@
+# Secrets - NEVER upload these!
+client_secret*.json
+client_secret.json
+token.json
+
+# Output files
+outputs/
+*.mp4
+test_*.png
+
+# Background videos (too large for GitHub)
+vision/
+
+# Logs
+*.log
+runlog.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
