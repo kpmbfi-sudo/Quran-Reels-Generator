@@ -837,14 +837,14 @@ def _long_youtube_title(res, kind_label):
     return f"{kind_label} | {res.get('surah_name', 'تلاوة قرآنية')} | {res.get('reciter_name', 'الشيخ أحمد بن علي العجمي')} 🌿"
 
 
-def _upload_long(video_path, title, description, tags):
+def _upload_long(video_path, title, description, tags, thumbnail_path=None):
     """رفع موحّد للفيديو الطويل (مشروع LONG_YOUTUBE_* المنفصل، احتياطي YOUTUBE_*)."""
     from youtube_uploader import YouTubeUploader
     try:
         uploader = YouTubeUploader(kind="long")
     except Exception:
         uploader = YouTubeUploader()
-    return uploader.upload(video_path, title, description, tags)
+    return uploader.upload(video_path, title, description, tags, thumbnail_path=thumbnail_path)
 
 
 def run_long_generation(state, test_mode=False):
@@ -899,7 +899,8 @@ def run_long_generation(state, test_mode=False):
 #القرآن_الكريم #quran #تلاوة_خاشعة #سورة_{surah_name.replace(' ', '_')} #صدقة_جارية"""
             tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
                     f'سورة {surah_name}', 'سورة كاملة', 'صدقة جارية', 'خاشعة']
-            video_id = uploader.upload(res["video_path"], title, description, tags)
+            video_id = _upload_long(res["video_path"], title, description, tags,
+                                    thumbnail_path=res.get("thumbnail"))
         except Exception as e:
             import traceback
             logger.error(f"Upload error: {e}")
@@ -973,7 +974,8 @@ def run_daily_batch(state, test_mode=False):
 #القرآن_الكريم #quran #تلاوة_خاشعة #سورة_{SURAH_NAMES[surah-1].replace(' ', '_')} #صدقة_جارية"""
                 tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
                         f'سورة {SURAH_NAMES[surah-1]}', 'سورة كاملة', 'صدقة جارية']
-                video_id = _upload_long(res["video_path"], title, desc, tags)
+                video_id = _upload_long(res["video_path"], title, desc, tags,
+                                        thumbnail_path=res.get("thumbnail"))
             except Exception as e:
                 logger.error(f"[1/3] upload error: {e}")
         job1 = {"kind": "long_surah", "surah": surah,
@@ -1020,7 +1022,8 @@ def run_daily_batch(state, test_mode=False):
 #القرآن_الكريم #quran #تلاوة_خاشعة #تجميع_قرآني #صدقة_جارية"""
                 tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
                         'تجميع قرآني', 'سور متتابعة', 'صدقة جارية']
-                video_id = _upload_long(res["video_path"], title, desc, tags)
+                video_id = _upload_long(res["video_path"], title, desc, tags,
+                                        thumbnail_path=res.get("thumbnail"))
             except Exception as e:
                 logger.error(f"[2/3] upload error: {e}")
         job2 = {"kind": "compilation", "title": cset["title"],
@@ -1068,7 +1071,8 @@ def run_daily_batch(state, test_mode=False):
 #الرقية_الشرعية #رقية #قرآن #quran #تلاوة_خاشعة #صدقة_جارية"""
                 tags = ['الرقية الشرعية', 'رقية', 'القرآن الكريم', 'quran',
                         reciter['name'], 'تحصين', 'صدقة جارية']
-                video_id = _upload_long(res["video_path"], title, desc, tags)
+                video_id = _upload_long(res["video_path"], title, desc, tags,
+                                        thumbnail_path=res.get("thumbnail"))
             except Exception as e:
                 logger.error(f"[3/3] upload error: {e}")
         job3 = {"kind": "ruqyah", "ruqyah": rq["id"], "title": rq["name"],

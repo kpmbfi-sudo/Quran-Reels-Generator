@@ -187,7 +187,8 @@ class YouTubeUploader:
         logger.info("💾 Token saved to token.json")
 
     def upload(self, video_path, title, description, tags=None,
-               category_id="22", privacy_status="public", made_for_kids=False):
+               category_id="22", privacy_status="public", made_for_kids=False,
+               thumbnail_path=None):
         """
         Upload a video to YouTube.
 
@@ -199,6 +200,7 @@ class YouTubeUploader:
             category_id: YouTube category (22 = People & Blogs)
             privacy_status: "public", "private", or "unlisted"
             made_for_kids: Whether the video is made for kids
+            thumbnail_path: (اختياري) مسار صورة مصغرة مخصصة (JPG/PNG) تُرفع للفيديو
 
         Returns:
             video_id: The YouTube video ID
@@ -289,6 +291,16 @@ class YouTubeUploader:
                 video_id = response["id"]
                 logger.info(f"✅ Upload complete! Video ID: {video_id}")
                 logger.info(f"🔗 URL: https://youtu.be/{video_id}")
+
+                # 🖼️ رفع الصورة المصغرة المخصصة (إن وُجدت) - لا يُلغي الرفع عند فشلها
+                if thumbnail_path and os.path.exists(thumbnail_path):
+                    try:
+                        thumb_media = MediaFileUpload(thumbnail_path, mimetype="image/jpeg", resumable=False)
+                        self.youtube.thumbnails().set(videoId=video_id, media_body=thumb_media).execute()
+                        logger.info(f"🖼️ Custom thumbnail uploaded: {thumbnail_path}")
+                    except Exception as te:
+                        logger.warning(f"⚠️ Thumbnail upload skipped: {te}")
+
                 return video_id
 
             except Exception as e:
