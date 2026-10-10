@@ -1,67 +1,9 @@
 {
-  "total_generated": 6,
-  "last_generated": null,
-  "history": [
-    {
-      "surah": 93,
-      "surah_name": "الضحى",
-      "start_ayah": 5,
-      "end_ayah": 9,
-      "reciter": "الشيخ عبدالباسط عبدالصمد (مجود)",
-      "duration": 48.3,
-      "video_id": null,
-      "date": "2026-08-17 14:40:58"
-    },
-    {
-      "surah": 30,
-      "surah_name": "الروم",
-      "start_ayah": 44,
-      "end_ayah": 45,
-      "reciter": "محمد صديق المنشاوي (مرتل)",
-      "duration": 30.0,
-      "video_id": null,
-      "date": "2026-08-17 14:59:49"
-    },
-    {
-      "surah": 103,
-      "surah_name": "العصر",
-      "start_ayah": 2,
-      "end_ayah": 3,
-      "reciter": "محمد صديق المنشاوي (مجود)",
-      "duration": 43.2,
-      "video_id": null,
-      "date": "2026-08-17 15:11:22"
-    },
-    {
-      "surah": 93,
-      "surah_name": "الضحى",
-      "start_ayah": 1,
-      "end_ayah": 5,
-      "reciter": "محمود خليل الحصري",
-      "duration": 31.2,
-      "video_id": "9-MDBpL8Ric",
-      "date": "2026-08-17 15:50:43"
-    },
-    {
-      "surah": 63,
-      "surah_name": "المنافقون",
-      "start_ayah": 3,
-      "end_ayah": 3,
-      "reciter": "مشاري العفاسي",
-      "duration": 19.4,
-      "video_id": "wNyP995O1_A",
-      "date": "2026-08-17 16:05:38"
-    },
-    {
-      "surah": 39,
-      "surah_name": "الزمر",
-      "start_ayah": 1,
-      "end_ayah": 2,
-      "reciter": "ماهر المعيقلي",
-      "duration": 17.6,
-      "video_id": "cXw7H4ZaraY",
-      "date": "2026-08-17 17:46:54"
-    }
-  ],
-  "last_reciter_idx": 6
+  "total_generated": 0,
+  "last_reciter_idx": 0,
+  "last_surah": 1,
+  "last_ayah": 0,
+  "last_long_surah": 0,
+  "last_long_reciter_idx": 0,
+  "history": []
 }

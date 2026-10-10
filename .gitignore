@@ -1,30 +1,65 @@
-# Secrets - NEVER upload these!
+# =================================================================
+# 🔐 Secrets - NEVER upload these! (أسرارك محمية تماماً)
+# =================================================================
+.env
+.env.*
 client_secret*.json
 client_secret.json
 token.json
+*.pem
+*.key
 
-# Output files
+# =================================================================
+# 🎬 Generated media & outputs (GBs - never push)
+# =================================================================
 outputs/
 *.mp4
+*.mov
+*.mkv
+*.webm
 test_*.png
+*_thumb.jpg
 
-# Background videos (too large for GitHub)
+# =================================================================
+# 🖼️ Backgrounds (auto-fetched from Pexels - never bundle)
+# Local nature clips are downloaded at runtime; keep repo tiny.
+# =================================================================
+backgrounds/
 vision/
 
-# Logs
-*.log
+# =================================================================
+# 🏗️ Build artifacts (PyInstaller dist = 200MB+, never push)
+# =================================================================
+dist/
+build/
+*.spec.bak
 runlog.txt
 
-# Python
+# =================================================================
+# 📜 Logs
+# =================================================================
+*.log
+logs/
+
+# =================================================================
+# 🐍 Python
+# =================================================================
 __pycache__/
 *.pyc
 *.pyo
-.env
+*.pyd
+.eggs/
+*.egg-info/
+.pytest_cache/
+venv/
+.venv/
+env/
 
-# IDE
+# =================================================================
+# 💻 IDE & OS
+# =================================================================
 .vscode/
 .idea/
-
-# OS
+*.swp
 Thumbs.db
 .DS_Store

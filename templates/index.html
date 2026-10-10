@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة صانع فيديوهات القرآن الكريم | تلاوات الزمن الجميل</title>
+    <meta name="description" content="أول منصة متكاملة لإنتاج فيديوهات القرآن الكريم المطولة والقصيرة بطابع تلاوات الزمن الجميل وعمالقة التلاوة المصرية وقراء الحرم المكي.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #080a10;
+            --bg-surface: #0f121d;
+            --bg-card: rgba(18, 22, 36, 0.82);
+            --bg-card-hover: rgba(26, 32, 52, 0.95);
+            --gold-primary: #d4af37;
+            --gold-light: #f5d77f;
+            --gold-dark: #aa882c;
+            --text-primary: #ffffff;
+            --text-secondary: #c5cbd8;
+            --text-muted: #798296;
+            --border-subtle: rgba(212, 175, 55, 0.22);
+            --border-active: #d4af37;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --shadow-gold: 0 0 35px rgba(212, 175, 55, 0.22);
+            --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.55);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(15, 18, 29, 0.8) 0%, var(--bg-base) 100%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Ambient Stars/Particles */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(1px 1px at 20px 30px, #d4af37, rgba(0,0,0,0)),
+                        radial-gradient(1px 1px at 150px 120px, #ffffff, rgba(0,0,0,0)),
+                        radial-gradient(1.5px 1.5px at 300px 250px, #f5d77f, rgba(0,0,0,0)),
+                        radial-gradient(1px 1px at 450px 80px, #ffffff, rgba(0,0,0,0)),
+                        radial-gradient(1.5px 1.5px at 600px 400px, #d4af37, rgba(0,0,0,0)),
+                        radial-gradient(1px 1px at 750px 180px, #ffffff, rgba(0,0,0,0)),
+                        radial-gradient(1.5px 1.5px at 900px 320px, #f5d77f, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 1000px 600px;
+            opacity: 0.35;
+        }
+
+        /* Top Navbar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            background: rgba(8, 10, 16, 0.85);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-gold);
+            font-size: 24px;
+        }
+
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .shutdown-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 60, 60, 0.12);
+            border: 1px solid rgba(255, 80, 80, 0.45);
+            color: #ff8080;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .shutdown-btn:hover {
+            background: #cc0000;
+            color: #fff;
+            border-color: #ff0000;
+            box-shadow: 0 4px 20px rgba(255, 0, 0, 0.45);
+        }
+
+        .autostart-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .autostart-badge:hover {
+            border-color: var(--gold-primary);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .indicator-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        .indicator-dot.off {
+            background: #94a3b8;
+            box-shadow: none;
+        }
+
+        /* Container Layout */
+        .app-container {
+            position: relative;
+            z-index: 10;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 30px 24px 80px;
+        }
+
+        /* Welcome Banner */
+        .daily-banner {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.14) 0%, rgba(18, 22, 36, 0.85) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 24px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(12px);
+        }
+
+        .banner-content h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--gold-light);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .banner-content p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-family: 'Amiri', serif;
+        }
+
+        .banner-streak {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .streak-num {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--gold-light);
+            line-height: 1;
+        }
+
+        .streak-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Main Workspace Grid */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 28px;
+        }
+
+        @media (max-width: 992px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Section Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(16px);
+            margin-bottom: 24px;
+            transition: var(--transition-smooth);
+        }
+
+        .card:hover {
+            border-color: rgba(212, 175, 55, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--gold-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-select, .form-input, .form-textarea {
+            width: 100%;
+            background: rgba(10, 13, 22, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-md);
+            padding: 13px 16px;
+            color: var(--text-primary);
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.95rem;
+            transition: var(--transition-smooth);
+            outline: none;
+        }
+
+        .form-select:focus, .form-input:focus, .form-textarea:focus {
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
+            background: rgba(15, 19, 32, 0.9);
+        }
+
+        /* Segmented Tabs / Pills */
+        .pill-selector {
+            display: flex;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            padding: 4px;
+            gap: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 18px;
+        }
+
+        .pill-btn {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-align: center;
+        }
+
+        .pill-btn.active {
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-primary));
+            color: #000000;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Background Gallery Grid */
+        .bg-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 6px;
+            margin-bottom: 16px;
+        }
+
+        .bg-gallery::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .bg-gallery::-webkit-scrollbar-thumb {
+            background: var(--gold-dark);
+            border-radius: 3px;
+        }
+
+        .bg-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            aspect-ratio: 16/9;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            background: #000;
+        }
+
+        .bg-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--gold-light);
+        }
+
+        .bg-item.selected {
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 16px rgba(212, 175, 55, 0.5);
+        }
+
+        .bg-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .bg-item-title {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+            padding: 4px 6px;
+            font-size: 0.7rem;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Vintage Effects Grid */
+        .fx-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .fx-card {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .fx-card:hover {
+            border-color: var(--gold-light);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .fx-card.active {
+            border-color: var(--gold-primary);
+            background: rgba(212, 175, 55, 0.12);
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+        }
+
+        .fx-icon {
+            font-size: 1.4rem;
+        }
+
+        .fx-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .fx-desc {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        /* Big Action Button */
+        .btn-generate {
+            width: 100%;
+            background: linear-gradient(135deg, #d4af37 0%, #f5d77f 50%, #d4af37 100%);
+            color: #0c0e14;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 18px 24px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            box-shadow: var(--shadow-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 45px rgba(212, 175, 55, 0.45);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Progress Card */
+        .progress-box {
+            display: none;
+            margin-top: 24px;
+        }
+
+        .progress-box.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--gold-dark), var(--gold-light));
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px var(--gold-primary);
+        }
+
+        .progress-status-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .console-logs {
+            margin-top: 14px;
+            background: #05060a;
+            border-radius: 10px;
+            padding: 12px;
+            height: 120px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #10b981;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Preview Player */
+        .preview-card {
+            display: none;
+        }
+
+        .preview-card.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .video-player-wrap {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            background: #000;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .video-player-wrap video {
+            width: 100%;
+            display: block;
+            max-height: 480px;
+        }
+
+        /* YouTube Publish Section */
+        .publish-card {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.06), rgba(18, 22, 36, 0.9));
+            border: 1px solid rgba(255, 68, 68, 0.25);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+        }
+
+        .btn-youtube {
+            width: 100%;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 16px 22px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(255, 0, 0, 0.35);
+        }
+
+        .btn-youtube:hover {
+            background: linear-gradient(135deg, #ff2222, #dd0000);
+            box-shadow: 0 6px 28px rgba(255, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .youtube-status-badge {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+
+    <!-- Navigation Header -->
+    <header class="navbar">
+        <div class="brand-box">
+            <div class="brand-icon">📖</div>
+            <div>
+                <h1 class="brand-title">منصة القرآن الكريم (الزمن الجميل)</h1>
+                <p class="brand-subtitle">استوديو إنتاج التلاوات الكلاسيكية والمطولة ونشرها آلياً <span id="verBadge" style="color:var(--gold-light);font-weight:700"></span></p>
+            </div>
+        </div>
+
+        <div class="nav-actions">
+            <div class="autostart-badge" id="autostartToggle" title="انقر لتفعيل أو إلغاء التشغيل التلقائي مع فتح اللابتوب">
+                <span class="indicator-dot" id="autostartDot"></span>
+                <span id="autostartText">التشغيل التلقائي: جارِ الفحص...</span>
+            </div>
+            <button class="shutdown-btn" id="shutdownBtn" onclick="shutdownServer()" title="إيقاف السيرفر نهائياً لإراحة اللابتوب">
+                ⏻ إيقاف السيرفر
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="app-container">
+        
+        <!-- Daily Welcome Greeting & Reminder -->
+        <section class="daily-banner">
+            <div class="banner-content">
+                <h2>🌿 يلا ابدأ اعمل فيديو اليوم!</h2>
+                <p>قال رسول الله ﷺ: «خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ» — اجعل لك كل يوم بصمة بنشر كلام الله كصدقة جارية.</p>
+            </div>
+            <div class="banner-streak">
+                <div class="streak-num" id="totalVideosCount">0</div>
+                <div class="streak-label">فيديو منشور</div>
+            </div>
+        </section>
+
+        <!-- Main Form & Settings Layout -->
+        <div class="grid-layout">
+            
+            <!-- Left Column: Quran & Audio Controls -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🎙️ اختيار القارئ والسورة المباركة</h3>
+                        <span class="youtube-status-badge" id="ytStatusBadge">يوتيوب متصل ✅</span>
+                    </div>
+
+                    <!-- Content Type: Surah vs Ruqyah vs Compilation -->
+                    <label class="form-label">نوع المحتوى (3 أقسام)</label>
+                    <div class="pill-selector">
+                        <button type="button" class="pill-btn active" id="ctypeSurahBtn" onclick="setContentType('surah')">
+                            📖 سورة / تلاوة
+                        </button>
+                        <button type="button" class="pill-btn" id="ctypeRuqyahBtn" onclick="setContentType('ruqyah')">
+                            🤲 رقية شرعية كاملة
+                        </button>
+                        <button type="button" class="pill-btn" id="ctypeCompBtn" onclick="setContentType('compilation')">
+                            📚 تجميع سور في فيديو واحد
+                        </button>
+                    </div>
+
+                    <!-- Mode Toggle: Full Surah vs Custom Range -->
+                    <label class="form-label">نوع التلاوة المطلوب</label>
+                    <div class="pill-selector" id="modeToggleWrap">
+                        <button type="button" class="pill-btn active" id="modeFullBtn" onclick="setMode('full')">
+                            ✨ سورة كاملة (تحميل ملف واحد كامل - للفيديوهات الطويلة)
+                        </button>
+                        <button type="button" class="pill-btn" id="modeRangeBtn" onclick="setMode('range')">
+                            ✂️ مقطع آيات محددة (حتى 30 آية - ريلز / شورتس)
+                        </button>
+                    </div>
+
+                    <!-- Reciter Select (Golden Era & Haram) -->
+                    <div class="form-group">
+                        <label class="form-label" for="reciterSelect">القارئ الجليل (عمالقة الزمن الجميل وقراء الحرم)</label>
+                        <select id="reciterSelect" class="form-select">
+                            <!-- Populated dynamically via JS -->
+                        </select>
+                    </div>
+
+                    <!-- Surah Select -->
+                    <div class="form-group" id="surahGroupWrap">
+                        <label class="form-label" for="surahSelect">السورة الكريمة</label>
+                        <select id="surahSelect" class="form-select">
+                            <!-- Populated dynamically via JS -->
+                        </select>
+                    </div>
+
+                    <!-- Ayah Range (Visible only in range mode) -->
+                    <div id="ayahRangeContainer" style="display: none;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                            <div class="form-group">
+                                <label class="form-label" for="startAyah">آية البداية</label>
+                                <input type="number" id="startAyah" class="form-input" value="1" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="endAyah">آية النهاية</label>
+                                <input type="number" id="endAyah" class="form-input" value="7" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ruqyah Controls (visible only in ruqyah mode) -->
+                    <div id="ruqyahWhat" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label" for="ruqyahSelect">نوع الرقية الشرعية (الآيات محددة شرعياً وتُبنى تلقائياً كاملة)</label>
+                            <select id="ruqyahSelect" class="form-select"></select>
+                        </div>
+                        <p id="ruqyahDesc" style="font-size:0.82rem;color:var(--text-secondary);background:rgba(212,175,55,0.07);border:1px solid var(--border-subtle);border-radius:10px;padding:10px 14px;margin-bottom:6px"></p>
+                        <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:14px">🤲 اختر الشيخ من الأعلى ثم اضغط توليد — تُبنى الرقية كاملة بالترتيب مع صور متتابعة ودعاء ختامي. (الشيخ محمد رفعت غير متاح للرقية)</p>
+                    </div>
+
+                    <!-- Compilation Controls (visible only in compilation mode) -->
+                    <div id="compWhat" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label" for="compTitle">عنوان التجميع (اختياري - يُقترح تلقائياً)</label>
+                            <input type="text" id="compTitle" class="form-input" placeholder="مثال: القرآن الكريم بدون إعلانات">
+                        </div>
+                        <label class="form-label">السور المجمّعة (حتى 10 - كل سورة كاملة أو مقطع آيات)</label>
+                        <div id="compItems"></div>
+                        <button type="button" class="pill-btn" onclick="addCompilationRow()" style="margin-bottom:14px">➕ إضافة سورة للتجميع</button>
+                    </div>
+
+                    <!-- Aspect Ratio / Orientation -->
+                    <div class="form-group">
+                        <label class="form-label">أبعاد الفيديو</label>
+                        <div class="pill-selector">
+                            <button type="button" class="pill-btn active" id="ratio169Btn" onclick="setRatio('16:9')">
+                                🖥️ أفقي (16:9) فيديو مطول لليوتيوب
+                            </button>
+                            <button type="button" class="pill-btn" id="ratio916Btn" onclick="setRatio('9:16')">
+                                📱 طولي (9:16) شورتس وريلز
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Caption Mode: نمط كتابة الآيات على الفيديو -->
+                    <div class="form-group" id="captionModeWrap">
+                        <label class="form-label">نمط كتابة الآيات على الفيديو 📜</label>
+                        <div class="pill-selector">
+                            <button type="button" class="pill-btn active" id="capSyncBtn" onclick="setCaptionMode('sync')">
+                                📜 آيات متزامنة (الرسم العثماني المُشكَّل مع كل صفحة)
+                            </button>
+                            <button type="button" class="pill-btn" id="capIntroBtn" onclick="setCaptionMode('intro')">
+                                ✨ مقدمة فقط (إطار ذهبي بأول 5 ثوانٍ ثم فيديو صافٍ)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Background Source: مصدر الخلفيات الطبيعية -->
+                    <div class="form-group">
+                        <label class="form-label">مصدر الخلفيات الطبيعية 🌿</label>
+                        <div class="pill-selector">
+                            <button type="button" class="pill-btn active" id="pexAutoBtn" onclick="setPexelsMode('auto')">
+                                ☁️ تلقائي من Pexels (طبيعة نقية 100%) + مكتبتي
+                            </button>
+                            <button type="button" class="pill-btn" id="pexLocalBtn" onclick="setPexelsMode('local')">
+                                🖼️ مكتبتي المحلية فقط
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Background Video & Vintage Effects Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🎞️ مكتبة الخلفيات ومؤثرات الستينات والسبعينات</h3>
+                        <label for="bgUploadInput" style="cursor: pointer;" class="youtube-status-badge">
+                            ➕ إضافة فيديو أو صورة من جهازك
+                        </label>
+                        <input type="file" id="bgUploadInput" accept="video/*,image/*" style="display: none;">
+                    </div>
+
+                    <label class="form-label">اختر خلفية من مكتبتك (للرقية والتجميع: يمكنك اختيار عدة خلفيات بالترتيب - كل صورة تُعرض ثم التي بعدها)</label>
+                    <div class="bg-gallery" id="bgGallery">
+                        <!-- Populated dynamically -->
+                    </div>
+
+                    <label class="form-label" style="margin-top: 14px;">جودة الصورة والصوت</label>
+                    <div style="border:1px solid rgba(16,185,129,0.35);background:rgba(16,185,129,0.08);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+                        <div style="font-size:1.4rem">🌿</div>
+                        <div>
+                            <div style="font-size:0.9rem;font-weight:700;color:#fff">نقي 100% بدون أي فلاتر</div>
+                            <div style="font-size:0.75rem;color:var(--text-muted)">فيديوهاتك نظيفة بالكامل — ألوان طبيعية وصوت نقي كما سُجّل</div>
+                        </div>
+                    </div>
+
+                    <!-- Speed Mode -->
+                    <div class="form-group">
+                        <label class="form-label">سرعة الرندر (الجودة ثابتة عالية في الوضعين)</label>
+                        <div class="pill-selector">
+                            <button type="button" class="pill-btn active" id="speedMaxBtn" onclick="setSpeed('max')">
+                                🚀 سرعة قصوى (تسريع العتاد ~3x)
+                            </button>
+                            <button type="button" class="pill-btn" id="speedBalBtn" onclick="setSpeed('balanced')">
+                                ⚖️ متوازن سينمائي
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Thumbnail Hook -->
+                    <div class="form-group">
+                        <label class="form-label" for="hookText">كلمات الصورة المصغرة - هوك (تُكتب على نفس الخلفية بخط عربي نظيف)</label>
+                        <input type="text" id="hookText" class="form-input" placeholder="مثال: رقية الحسد والعين | راحة للأعصاب">
+                        <p style="font-size:0.72rem;color:var(--text-muted);margin-top:6px">افصل السطرين بعلامة | — تُولّد تلقائياً مع كل فيديو، ويمكن إعادة توليدها بعد المعاينة.</p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="button" class="btn-generate" id="generateBtn" onclick="startGeneration()">
+                        <span>✨ بدء صناعة وتوليد الفيديو الآن</span>
+                    </button>
+                    <p style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);text-align:center">
+                        🌿 الاسم والإطارات تظهر بنعومة في أول 5 ثوانٍ فقط ثم تختفي بضباب خفيف، ويبقى الفيديو صافياً متحركاً للاستماع والراحة النفسية
+                    </p>
+
+                    <!-- Realtime Progress Box -->
+                    <div class="progress-box" id="progressBox">
+                        <div class="progress-status-text">
+                            <span id="progressStepTitle">جاري العمل...</span>
+                            <span id="progressPercentNum">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="progressBarFill"></div>
+                        </div>
+                        <div class="console-logs" id="consoleLogs"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Live Preview & YouTube Publishing -->
+            <div>
+                <!-- Video Preview Card -->
+                <div class="card preview-card" id="previewCard">
+                    <div class="card-header">
+                        <h3 class="card-title">🎬 معاينة الفيديو الناتج</h3>
+                        <a id="downloadVideoBtn" href="#" download class="youtube-status-badge" style="text-decoration: none;">
+                            ⬇️ تحميل الفيديو للكمبيوتر
+                        </a>
+                    </div>
+                    <div class="video-player-wrap">
+                        <video id="previewVideoPlayer" controls playsinline>
+                            المتصفح لا يدعم مشغل الفيديو.
+                        </video>
+                    </div>
+                    <div id="videoInfoLine" style="text-align:center;color:var(--text-secondary);font-size:0.85rem;margin-bottom:6px"></div>
+                    <div id="thumbPreviewWrap" style="display:none;text-align:center;margin:10px 0">
+                        <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:6px">🖼️ الصورة المصغرة المقترحة ليوتيوب</div>
+                        <img id="thumbPreviewImg" style="max-width:100%;border-radius:12px;border:1px solid var(--border-subtle)" alt="الصورة المصغرة">
+                        <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+                            <a id="thumbDownloadBtn" href="#" download class="youtube-status-badge" style="text-decoration:none">⬇️ تحميل الصورة المصغرة</a>
+                            <button type="button" class="pill-btn" onclick="regenerateThumbnail()">🔄 إعادة توليد بالهوك الحالي</button>
+                        </div>
+                    </div>
+                    <p style="text-align:center;color:var(--text-muted);font-size:0.8rem">👇 بعد المعاينة: راجع العنوان والوصف تحت ثم اضغط زر النشر الأحمر</p>
+                </div>
+
+                <!-- YouTube One-Click Publisher Card -->
+                <div class="card publish-card" id="publishCard" style="display: none;">
+                    <div class="card-header">
+                        <h3 class="card-title" style="color: #ff5555;">🚀 نشر الفيديو على يوتيوب</h3>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ytTitle">عنوان الفيديو (مقترح وجذاب وعالي المشاهدات)</label>
+                        <input type="text" id="ytTitle" class="form-input" maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ytDesc">الوصف المرفق (يتضمن الآيات والأدعية والصدقة الجارية)</label>
+                        <textarea id="ytDesc" class="form-textarea" rows="7"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ytPrivacy">حالة النشر</label>
+                        <select id="ytPrivacy" class="form-select">
+                            <option value="public">علني (Public) - نشر فوري للجمهور</option>
+                            <option value="unlisted">غير مدرج (Unlisted) - للمعاينة الخاصة</option>
+                            <option value="private">خاص (Private)</option>
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn-youtube" id="publishBtn" onclick="publishToYouTube()">
+                        <span>🔴 نشر الآن على القناة بضغطة واحدة</span>
+                    </button>
+
+                    <div style="text-align:center;margin-top:10px">
+                        <button type="button" class="pill-btn" onclick="runDiag()" title="افحص الاتصال بسيرفرات يوتيوب قبل الرفع">🔍 فحص الاتصال بسيرفرات يوتيوب</button>
+                    </div>
+                    <div id="diagResult" style="margin-top:10px;font-size:0.8rem;text-align:center;color:var(--text-secondary)"></div>
+
+                    <div id="publishResult" style="margin-top: 14px; text-align: center; font-weight: 700;"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let currentMode = 'full';
+        let currentRatio = '16:9';
+        let currentSpeed = 'max';
+        let currentCaptionMode = 'sync';   // sync: آيات متزامنة | intro: مقدمة فقط
+        let currentPexelsMode = 'auto';    // auto: Pexels + مكتبتي | local: مكتبتي فقط
+        let currentVintageEffect = 'none'; // filters removed: always pure clean video
+        let selectedBackground = null;
+        let selectedBackgrounds = [];
+        let contentType = 'surah'; // surah | ruqyah | compilation
+        let surahCache = [];
+        let reciterCache = [];
+        let generatedVideoData = null;
+        let progressPollInterval = null;
+
+        // Init on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadConfig();
+            await loadBackgrounds();
+            await loadRuqyahTypes();
+            addCompilationRow(36, 'full');
+            addCompilationRow(18, 'full');
+            await checkAutostartStatus();
+            await checkYouTubeStatus();
+            await checkEngineVersion();
+        });
+
+        // Content type tabs: surah vs ruqyah vs compilation
+        function setContentType(t) {
+            contentType = t;
+            document.getElementById('ctypeSurahBtn').classList.toggle('active', t === 'surah');
+            document.getElementById('ctypeRuqyahBtn').classList.toggle('active', t === 'ruqyah');
+            document.getElementById('ctypeCompBtn').classList.toggle('active', t === 'compilation');
+            const isSurah = (t === 'surah');
+            document.getElementById('modeToggleWrap').style.display = isSurah ? '' : 'none';
+            document.getElementById('surahGroupWrap').style.display = isSurah ? '' : 'none';
+            document.getElementById('ayahRangeContainer').style.display = (isSurah && currentMode === 'range') ? 'block' : 'none';
+            document.getElementById('ruqyahWhat').style.display = (t === 'ruqyah') ? 'block' : 'none';
+            document.getElementById('compWhat').style.display = (t === 'compilation') ? 'block' : 'none';
+            // Reset background selection when switching (single for surah, multi for others)
+            selectedBackgrounds = selectedBackground ? [selectedBackground] : [];
+            refreshBgSelection();
+        }
+
+        function refreshBgSelection() {
+            document.querySelectorAll('.bg-item').forEach(el => {
+                const name = el.getAttribute('data-bg');
+                el.classList.toggle('selected', selectedBackgrounds.includes(name));
+            });
+        }
+
+        // Ruqyah types from server
+        async function loadRuqyahTypes() {
+            try {
+                const res = await fetch('/api/ruqyah/types');
+                const list = await res.json();
+                const sel = document.getElementById('ruqyahSelect');
+                sel.innerHTML = '';
+                list.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.id;
+                    opt.textContent = `${r.name} (${r.total_ayahs} آية - ${r.segments_count} مقاطع)`;
+                    sel.appendChild(opt);
+                });
+                const updateDesc = () => {
+                    const cur = list.find(x => x.id === sel.value);
+                    document.getElementById('ruqyahDesc').textContent = cur ? cur.description : '';
+                    if (cur && !document.getElementById('hookText').value) {
+                        document.getElementById('hookText').placeholder = `مثال: ${cur.hook}`;
+                    }
+                };
+                sel.addEventListener('change', updateDesc);
+                updateDesc();
+            } catch (err) {
+                console.error("Ruqyah types error:", err);
+            }
+        }
+
+        // Compilation rows: each row = surah + full/range + ayahs + optional own reciter
+        function addCompilationRow(defSurah, defMode, defA, defB) {
+            const wrap = document.getElementById('compItems');
+            if (wrap.children.length >= 10) { alert("الحد الأقصى 10 سور في التجميع الواحد"); return; }
+            const row = document.createElement('div');
+            row.className = 'comp-row';
+            row.style.cssText = 'display:grid;grid-template-columns:1.4fr 1fr 0.6fr 0.6fr auto;gap:8px;margin-bottom:8px;align-items:center';
+            const surahOpts = surahCache.map(s => `<option value="${s.number}" ${s.number === (defSurah || 36) ? 'selected' : ''}>${s.number}. ${s.name}</option>`).join('');
+            const reciterOpts = `<option value="">نفس الشيخ الرئيسي</option>` + reciterCache.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            row.innerHTML = `
+                <select class="form-select comp-surah">${surahOpts}</select>
+                <select class="form-select comp-mode">
+                    <option value="full" ${(defMode || 'full') === 'full' ? 'selected' : ''}>سورة كاملة</option>
+                    <option value="range" ${defMode === 'range' ? 'selected' : ''}>مقطع آيات</option>
+                </select>
+                <input type="number" class="form-input comp-a" value="${defA || 1}" min="1" title="من آية">
+                <input type="number" class="form-input comp-b" value="${defB || 7}" min="1" title="إلى آية">
+                <button type="button" class="pill-btn" onclick="this.parentElement.remove()">✖</button>
+                <select class="form-select comp-reciter" style="grid-column:1/-1">${reciterOpts}</select>
+            `;
+            wrap.appendChild(row);
+        }
+
+        function collectCompilationItems() {
+            const items = [];
+            document.querySelectorAll('#compItems .comp-row').forEach(row => {
+                items.push({
+                    surah: parseInt(row.querySelector('.comp-surah').value),
+                    mode: row.querySelector('.comp-mode').value,
+                    startAyah: parseInt(row.querySelector('.comp-a').value) || 1,
+                    endAyah: parseInt(row.querySelector('.comp-b').value) || 7,
+                    reciter: row.querySelector('.comp-reciter').value || null
+                });
+            });
+            return items;
+        }
+
+        // Pre-upload connection diagnostics (professional check before rendering)
+        async function runDiag() {
+            const box = document.getElementById('diagResult');
+            box.textContent = '🔍 جاري فحص الاتصال بسيرفرات جوجل...';
+            try {
+                const res = await fetch('/api/youtube/diag');
+                const d = await res.json();
+                if (d.ok) {
+                    const v6bad = Object.values(d.hosts || {}).some(h => String(h.ipv6 || '').startsWith('fail'));
+                    box.innerHTML = `✅ الاتصال سليم عبر IPv4 ${v6bad ? '(IPv6 مكسور عندك لكن الكود يتجاوزه تلقائياً)' : ''} — آمن تنتج وترفع.`;
+                    box.style.color = '#10b981';
+                } else {
+                    box.innerHTML = `❌ ${d.advice || d.error || 'تعذر الاتصال'} — لا تنتج فيديو طويل الآن قبل إصلاح النت.`;
+                    box.style.color = '#ff5555';
+                }
+            } catch (err) {
+                box.textContent = '❌ فشل الفحص: ' + err.message;
+                box.style.color = '#ff5555';
+            }
+        }
+
+        // Regenerate thumbnail with current hook text
+        async function regenerateThumbnail() {
+            if (!generatedVideoData) return;
+            const hook = document.getElementById('hookText').value.trim();
+            if (!hook) { alert("اكتب كلمات الهوك أولاً في حقل الصورة المصغرة"); return; }
+            try {
+                const res = await fetch('/api/thumbnail', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        videoPath: generatedVideoData.video_path,
+                        hookText: hook,
+                        smallTitle: generatedVideoData.reciter_name || ''
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('thumbPreviewImg').src = data.thumbnail_url + '?t=' + Date.now();
+                    document.getElementById('thumbDownloadBtn').href = data.thumbnail_url;
+                    generatedVideoData.thumbnail_url = data.thumbnail_url;
+                } else {
+                    alert("خطأ: " + data.error);
+                }
+            } catch (err) {
+                alert("خطأ في الاتصال: " + err.message);
+            }
+        }
+
+        // Engine version badge: proves the running server has the latest fixes
+        async function checkEngineVersion() {
+            try {
+                const res = await fetch('/api/version');
+                const data = await res.json();
+                const badge = document.getElementById('verBadge');
+                if (badge) badge.textContent = `• نسخة المحرك ${data.engine_version} ${data.qsv_ready ? '🚀' : ''}`;
+            } catch (err) {
+                console.error("Version check error:", err);
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/config');
+                const data = await res.json();
+
+                // Populate Reciters
+                const reciterSelect = document.getElementById('reciterSelect');
+                reciterSelect.innerHTML = '';
+                
+                const groupGolden = document.createElement('optgroup');
+                groupGolden.label = '── عمالقة قراء مصر والزمن الجميل ──';
+                const groupHaram = document.createElement('optgroup');
+                groupHaram.label = '── أئمة وقراء الحرم المكي والنبوي ──';
+                const groupModern = document.createElement('optgroup');
+                groupModern.label = '── نخبة القراء المعاصرين ──';
+
+                data.reciters.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.id;
+                    opt.textContent = `${r.name} (${r.subname})`;
+                    if (r.category === 'golden_era') groupGolden.appendChild(opt);
+                    else if (r.category === 'haram') groupHaram.appendChild(opt);
+                    else groupModern.appendChild(opt);
+                });
+
+                reciterSelect.appendChild(groupGolden);
+                reciterSelect.appendChild(groupHaram);
+                reciterSelect.appendChild(groupModern);
+
+                // Populate Surahs
+                const surahSelect = document.getElementById('surahSelect');
+                surahSelect.innerHTML = '';
+                data.surahs.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.number;
+                    opt.textContent = `${s.number}. سورة ${s.name} (${s.verses_count} آية - ${s.revelation})`;
+                    surahSelect.appendChild(opt);
+                });
+
+                // Update total count
+                document.getElementById('totalVideosCount').textContent = data.total_generated || '0';
+                surahCache = data.surahs || [];
+                reciterCache = data.reciters || [];
+
+                // Surah change listener
+                surahSelect.addEventListener('change', () => {
+                    const sNum = parseInt(surahSelect.value);
+                    const surahObj = data.surahs.find(s => s.number === sNum);
+                    if (surahObj) {
+                        document.getElementById('endAyah').max = surahObj.verses_count;
+                        document.getElementById('startAyah').max = surahObj.verses_count;
+                    }
+                });
+
+            } catch (err) {
+                console.error("Config load error:", err);
+            }
+        }
+
+        async function loadBackgrounds() {
+            try {
+                const res = await fetch('/api/backgrounds');
+                const list = await res.json();
+                const gallery = document.getElementById('bgGallery');
+                gallery.innerHTML = '';
+
+                if (list.length === 0) {
+                    gallery.innerHTML = '<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 0.85rem; padding: 10px;">لا توجد فيديوهات في مجلد backgrounds. يمكنك رفع فيديو بالزر أعلاه.</div>';
+                    return;
+                }
+
+                list.forEach((bg, idx) => {
+                    const item = document.createElement('div');
+                    item.className = `bg-item ${idx === 0 ? 'selected' : ''}`;
+                    item.setAttribute('data-bg', bg.filename);
+                    if (idx === 0) {
+                        selectedBackground = bg.filename;
+                        selectedBackgrounds = [bg.filename];
+                    }
+
+                    item.onclick = () => {
+                        if (contentType === 'surah') {
+                            document.querySelectorAll('.bg-item').forEach(el => el.classList.remove('selected'));
+                            item.classList.add('selected');
+                            selectedBackground = bg.filename;
+                            selectedBackgrounds = [bg.filename];
+                        } else {
+                            // Multi-select slideshow order for ruqyah/compilation (max 8)
+                            const i = selectedBackgrounds.indexOf(bg.filename);
+                            if (i >= 0) {
+                                selectedBackgrounds.splice(i, 1);
+                            } else {
+                                if (selectedBackgrounds.length >= 8) { alert("الحد الأقصى 8 خلفيات متتابعة"); return; }
+                                selectedBackgrounds.push(bg.filename);
+                            }
+                            selectedBackground = selectedBackgrounds[0] || null;
+                            refreshBgSelection();
+                        }
+                    };
+
+                    item.innerHTML = `
+                        <img src="${bg.thumbnail || 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'60\' fill=\'%23111\'><rect width=\'100\' height=\'60\'/></svg>'}" alt="${bg.filename}">
+                        <div class="bg-item-title">${bg.filename}</div>
+                    `;
+                    gallery.appendChild(item);
+                });
+
+            } catch (err) {
+                console.error("Backgrounds error:", err);
+            }
+        }
+
+        // Background Upload
+        document.getElementById('bgUploadInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('video', file);
+
+            try {
+                const res = await fetch('/api/upload-background', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+                if (result.success) {
+                    await loadBackgrounds();
+                    alert("تمت إضافة فيديو الخلفية بنجاح إلى مكتبتك!");
+                } else {
+                    alert("خطأ أثناء رفع الفيديو: " + result.error);
+                }
+            } catch (err) {
+                alert("فشل الرفع: " + err.message);
+            }
+        });
+
+        // Mode and Style toggles
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeFullBtn').classList.toggle('active', mode === 'full');
+            document.getElementById('modeRangeBtn').classList.toggle('active', mode === 'range');
+            document.getElementById('ayahRangeContainer').style.display = mode === 'range' ? 'block' : 'none';
+        }
+
+        function setRatio(ratio) {
+            currentRatio = ratio;
+            document.getElementById('ratio169Btn').classList.toggle('active', ratio === '16:9');
+            document.getElementById('ratio916Btn').classList.toggle('active', ratio === '9:16');
+        }
+
+        function setSpeed(sp) {
+            currentSpeed = sp;
+            document.getElementById('speedMaxBtn').classList.toggle('active', sp === 'max');
+            document.getElementById('speedBalBtn').classList.toggle('active', sp === 'balanced');
+        }
+
+        function setCaptionMode(m) {
+            currentCaptionMode = m;
+            document.getElementById('capSyncBtn').classList.toggle('active', m === 'sync');
+            document.getElementById('capIntroBtn').classList.toggle('active', m === 'intro');
+        }
+
+        function setPexelsMode(m) {
+            currentPexelsMode = m;
+            document.getElementById('pexAutoBtn').classList.toggle('active', m === 'auto');
+            document.getElementById('pexLocalBtn').classList.toggle('active', m === 'local');
+        }
+
+        // Start Generation
+        async function startGeneration() {
+            const generateBtn = document.getElementById('generateBtn');
+            const progressBox = document.getElementById('progressBox');
+            const logsBox = document.getElementById('consoleLogs');
+            
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span>⏳ جاري العمل والتوليد...</span>';
+            progressBox.classList.add('active');
+            logsBox.innerHTML = '';
+
+            const payload = {
+                surah: parseInt(document.getElementById('surahSelect').value),
+                reciter: document.getElementById('reciterSelect').value,
+                mode: currentMode,
+                startAyah: parseInt(document.getElementById('startAyah').value),
+                endAyah: parseInt(document.getElementById('endAyah').value),
+                aspectRatio: currentRatio,
+                vintageEffect: currentVintageEffect,
+                speedMode: currentSpeed,
+                captionMode: currentCaptionMode,
+                pexelsMode: currentPexelsMode,
+                backgroundVideo: selectedBackground,
+                backgrounds: selectedBackgrounds,
+                hookText: document.getElementById('hookText').value.trim()
+            };
+
+            let endpoint = '/api/generate';
+            if (contentType === 'ruqyah') {
+                endpoint = '/api/generate-ruqyah';
+                payload.ruqyahId = document.getElementById('ruqyahSelect').value;
+                delete payload.surah; delete payload.mode; delete payload.startAyah; delete payload.endAyah;
+            } else if (contentType === 'compilation') {
+                endpoint = '/api/generate-compilation';
+                payload.items = collectCompilationItems();
+                payload.title = document.getElementById('compTitle').value.trim();
+                if (!payload.items.length) { alert("أضف سورة واحدة على الأقل للتجميع"); resetGenerateBtn(); return; }
+                delete payload.surah; delete payload.mode; delete payload.startAyah; delete payload.endAyah;
+            }
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const initRes = await res.json();
+
+                if (!initRes.success) {
+                    alert("خطأ: " + initRes.error);
+                    resetGenerateBtn();
+                    return;
+                }
+
+                // Start polling progress
+                progressPollInterval = setInterval(pollProgress, 1200);
+
+            } catch (err) {
+                alert("خطأ في الاتصال بالسيرفر: " + err.message);
+                resetGenerateBtn();
+            }
+        }
+
+        async function pollProgress() {
+            try {
+                const res = await fetch('/api/progress');
+                const data = await res.json();
+
+                document.getElementById('progressBarFill').style.width = data.percent + '%';
+                document.getElementById('progressPercentNum').textContent = data.percent + '%';
+                document.getElementById('progressStepTitle').textContent = data.status;
+
+                const logsBox = document.getElementById('consoleLogs');
+                if (data.logs && data.logs.length > 0) {
+                    logsBox.innerHTML = data.logs.map(l => `<div>> ${l}</div>`).join('');
+                    logsBox.scrollTop = logsBox.scrollHeight;
+                }
+
+                if (data.is_complete) {
+                    clearInterval(progressPollInterval);
+                    resetGenerateBtn();
+                    generatedVideoData = data.result;
+                    showPreview(data.result);
+                } else if (data.error) {
+                    clearInterval(progressPollInterval);
+                    resetGenerateBtn();
+                    alert("حدث خطأ أثناء الإنشاء: " + data.error);
+                }
+            } catch (err) {
+                console.error("Progress poll error:", err);
+            }
+        }
+
+        function resetGenerateBtn() {
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<span>✨ بدء صناعة وتوليد الفيديو الآن</span>';
+        }
+
+        function showPreview(result) {
+            const previewCard = document.getElementById('previewCard');
+            const player = document.getElementById('previewVideoPlayer');
+            const downloadBtn = document.getElementById('downloadVideoBtn');
+            const publishCard = document.getElementById('publishCard');
+
+            player.src = result.web_url;
+            downloadBtn.href = result.web_url;
+            downloadBtn.download = result.filename;
+
+            // Show duration + size so you know exactly what will be published
+            const infoLine = document.getElementById('videoInfoLine');
+            if (infoLine && result.duration) {
+                infoLine.textContent = `المدة: ${result.duration} ثانية • الحجم: ${result.size_mb || '?'} MB • ${result.surah_name || ''} (${result.ayah_range_label || ''})`;
+            }
+
+            // Thumbnail preview (auto-generated with hook)
+            const thumbWrap = document.getElementById('thumbPreviewWrap');
+            if (result.thumbnail_url) {
+                document.getElementById('thumbPreviewImg').src = result.thumbnail_url;
+                const dl = document.getElementById('thumbDownloadBtn');
+                dl.href = result.thumbnail_url;
+                dl.download = (result.filename || 'thumb').replace(/\.[^.]+$/, '') + '_thumb.jpg';
+                thumbWrap.style.display = 'block';
+            } else {
+                thumbWrap.style.display = 'none';
+            }
+
+            previewCard.classList.add('active');
+            previewCard.scrollIntoView({ behavior: 'smooth' });
+
+            // Populate suggested YouTube metadata
+            if (result.youtube_metadata) {
+                document.getElementById('ytTitle').value = result.youtube_metadata.title;
+                document.getElementById('ytDesc').value = result.youtube_metadata.description;
+            }
+            publishCard.style.display = 'block';
+        }
+
+        // YouTube Publish
+        async function publishToYouTube() {
+            if (!generatedVideoData) return;
+            const publishBtn = document.getElementById('publishBtn');
+            const resultBox = document.getElementById('publishResult');
+
+            publishBtn.disabled = true;
+            publishBtn.innerHTML = '<span>⏳ جاري الرفع إلى يوتيوب الآن...</span>';
+            resultBox.innerHTML = '<span style="color: #f5d77f;">جاري معالجة ورفع الفيديو... يرجى الانتظار</span>';
+
+            const payload = {
+                videoPath: generatedVideoData.video_path,
+                title: document.getElementById('ytTitle').value,
+                description: document.getElementById('ytDesc').value,
+                privacyStatus: document.getElementById('ytPrivacy').value
+            };
+
+            try {
+                const res = await fetch('/api/youtube/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    resultBox.innerHTML = `
+                        <div style="color: #10b981; padding: 12px; background: rgba(16,185,129,0.1); border-radius: 8px;">
+                            🎉 تم نشر الفيديو بنجاح على يوتيوب!<br>
+                            <a href="${data.url}" target="_blank" style="color: #f5d77f; text-decoration: underline; margin-top: 6px; display: inline-block;">
+                                شاهد الفيديو الآن: ${data.url}
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    resultBox.innerHTML = `<span style="color: #ff5555;">خطأ أثناء الرفع: ${data.error}</span>`;
+                }
+            } catch (err) {
+                resultBox.innerHTML = `<span style="color: #ff5555;">خطأ في الاتصال: ${err.message}</span>`;
+            } finally {
+                publishBtn.disabled = false;
+                publishBtn.innerHTML = '<span>🔴 نشر الآن على القناة بضغطة واحدة</span>';
+            }
+        }
+
+        // Auto-start management
+        async function checkAutostartStatus() {
+            try {
+                const res = await fetch('/api/autostart/status');
+                const data = await res.json();
+                updateAutostartUI(data.enabled);
+            } catch (err) {
+                console.error("Autostart check error:", err);
+            }
+        }
+
+        function updateAutostartUI(enabled) {
+            const dot = document.getElementById('autostartDot');
+            const text = document.getElementById('autostartText');
+            if (enabled) {
+                dot.classList.remove('off');
+                text.textContent = 'التشغيل التلقائي عند فتح اللابتوب: مفعل 🟢';
+            } else {
+                dot.classList.add('off');
+                text.textContent = 'التشغيل التلقائي عند فتح اللابتوب: معطل ⚪';
+            }
+        }
+
+        document.getElementById('autostartToggle').addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/autostart/toggle', { method: 'POST' });
+                const data = await res.json();
+                updateAutostartUI(data.enabled);
+                alert(data.message);
+            } catch (err) {
+                alert("خطأ: " + err.message);
+            }
+        });
+
+        // Shutdown the whole server so the laptop rests (closing the tab alone does NOT stop it)
+        async function shutdownServer() {
+            if (!confirm("هل تريد إيقاف سيرفر المنصة نهائياً لإراحة اللابتوب؟\n(لن تتمكن من التوليد حتى تشغله مرة أخرى)")) return;
+            try {
+                const res = await fetch('/api/shutdown', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    document.body.innerHTML = '<div style="text-align:center;padding:120px 20px;font-family:Cairo,sans-serif;background:#080a10;color:#fff;min-height:100vh">'
+                        + '<div style="font-size:3rem;margin-bottom:16px">🌙</div>'
+                        + '<h2 style="color:#f5d77f">تم إيقاف السيرفر بنجاح</h2>'
+                        + '<p style="color:#c5cbd8;margin-top:10px">اللابتوب دلوقتي مرتاح. يمكنك إغلاق الصفحة والنافذة السوداء بأمان.</p>'
+                        + '<p style="color:#798296;margin-top:6px;font-size:0.85rem">للتشغيل مرة أخرى: افتح launch_studio.bat</p></div>';
+                } else {
+                    alert(data.error || "تعذر الإيقاف");
+                }
+            } catch (err) {
+                // Server likely already stopped (connection dropped) = success
+                document.body.innerHTML = '<div style="text-align:center;padding:120px 20px;font-family:sans-serif;background:#080a10;color:#fff;min-height:100vh">'
+                    + '<h2 style="color:#f5d77f">تم إيقاف السيرفر ✅</h2>'
+                    + '<p style="color:#c5cbd8">يمكنك إغلاق الصفحة والنافذة السوداء بأمان.</p></div>';
+            }
+        }
+
+        // Check YouTube Auth status
+        let ytPollInterval = null;
+        async function checkYouTubeStatus() {
+            try {
+                const res = await fetch('/api/youtube/status');
+                const data = await res.json();
+                const badge = document.getElementById('ytStatusBadge');
+                if (data.connected) {
+                    badge.innerHTML = 'يوتيوب متصل وجاهز للنشر بالمفتاح الجديد ✅';
+                    badge.style.color = '#10b981';
+                    badge.style.background = 'rgba(16, 185, 129, 0.15)';
+                    badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                    badge.onclick = null;
+                    badge.style.cursor = 'default';
+                    if (ytPollInterval) {
+                        clearInterval(ytPollInterval);
+                        ytPollInterval = null;
+                    }
+                } else {
+                    badge.innerHTML = '🔑 ربط القناة بالمفتاح الجديد (انقر هنا)';
+                    badge.style.color = '#f5d77f';
+                    badge.style.background = 'rgba(212, 175, 55, 0.2)';
+                    badge.style.borderColor = '#d4af37';
+                    badge.style.cursor = 'pointer';
+                    badge.title = data.message;
+                    badge.onclick = connectYouTube;
+                }
+            } catch (err) {
+                console.error("YT status error:", err);
+            }
+        }
+
+        async function connectYouTube() {
+            try {
+                const res = await fetch('/api/youtube/start-auth', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert("🌐 تم فتح نافذة تسجيل الدخول في المتصفح!\nيرجى اختيار حسابك على Google والسماح بالصلاحيات لربط قناتك.");
+                    if (!ytPollInterval) {
+                        ytPollInterval = setInterval(checkYouTubeStatus, 3000);
+                    }
+                } else {
+                    alert("خطأ أثناء بدء الربط: " + data.error);
+                }
+            } catch (err) {
+                alert("خطأ في الاتصال: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

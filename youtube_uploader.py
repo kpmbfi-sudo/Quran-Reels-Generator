@@ -27,7 +27,24 @@ import sys
 import json
 import logging
 import pickle
+import socket
+import time
 from pathlib import Path
+
+# --- FIX WinError 10060 on Etisalat/WE routers: broken IPv6 blocks googleapis ---
+try:
+    _orig_getaddrinfo = socket.getaddrinfo
+
+    def _ipv4_first_getaddrinfo(*args, **kwargs):
+        try:
+            responses = _orig_getaddrinfo(*args, **kwargs)
+            return sorted(responses, key=lambda r: r[0] != socket.AF_INET)
+        except Exception:
+            return _orig_getaddrinfo(*args, **kwargs)
+
+    socket.getaddrinfo = _ipv4_first_getaddrinfo
+except Exception:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -54,11 +71,34 @@ _load_env()
 # YouTube API scopes
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
+# Dual-project support: daily plan = 1 long + 5 shorts.
+# kind="shorts" -> SHORTS_YOUTUBE_* | kind="long" -> LONG_YOUTUBE_* | kind="" -> YOUTUBE_*
+# Any missing prefixed set falls back to plain YOUTUBE_* (single-project users unaffected).
+def _read_yt_env(prefix=""):
+    cid = os.environ.get(f"{prefix}YOUTUBE_CLIENT_ID", "").strip()
+    csec = os.environ.get(f"{prefix}YOUTUBE_CLIENT_SECRET", "").strip()
+    rtok = os.environ.get(f"{prefix}YOUTUBE_REFRESH_TOKEN", "").strip()
+    if cid and csec and rtok:
+        return cid, csec, rtok
+    if prefix:
+        return _read_yt_env("")
+    return None, None, None
+
+def _kind_to_prefix(kind):
+    k = (kind or "").strip().lower()
+    if k in ("shorts", "short", "reel", "reels"):
+        return "SHORTS_"
+    if k in ("long", "full", "video"):
+        return "LONG_"
+    return ""
+
 
 class YouTubeUploader:
     """Handles YouTube video uploads with OAuth2 authentication."""
 
-    def __init__(self):
+    def __init__(self, kind=""):
+        self.kind = kind
+        self.prefix = _kind_to_prefix(kind)
         self.youtube = self._get_authenticated_service()
 
     def _get_authenticated_service(self):
@@ -70,9 +110,8 @@ class YouTubeUploader:
         creds = None
 
         # Method 1: Environment variables (from .env or GitHub Secrets)
-        client_id = os.environ.get("YOUTUBE_CLIENT_ID", "").strip()
-        client_secret = os.environ.get("YOUTUBE_CLIENT_SECRET", "").strip()
-        refresh_token = os.environ.get("YOUTUBE_REFRESH_TOKEN", "").strip()
+        # Dual-project aware: SHORTS_YOUTUBE_* / LONG_YOUTUBE_* with fallback to YOUTUBE_*
+        client_id, client_secret, refresh_token = _read_yt_env(self.prefix)
 
         if client_id and client_secret and refresh_token:
             logger.info("🔑 Using environment variables for YouTube auth")
@@ -199,13 +238,18 @@ class YouTubeUploader:
             video_path,
             mimetype="video/mp4",
             resumable=True,
-            chunksize=1024 * 1024 * 5,  # 5MB chunks
+            chunksize=1024 * 1024 * 2,  # 2MB chunks: أنسب للإنترنت البطيء/غير المستقر
         )
 
         logger.info(f"📤 Uploading to YouTube: {title}")
 
-        # Execute upload with retry on transient failures
-        max_retries = 3
+        # Execute upload with retry on transient failures (resumable: يكمل من حيث توقف)
+        import httplib2
+        from googleapiclient.errors import HttpError
+        RETRIABLE = (TimeoutError, ConnectionError, ConnectionResetError,
+                     BrokenPipeError, socket.timeout, socket.gaierror,
+                     httplib2.ServerNotFoundError)
+        max_retries = 10
         for attempt in range(max_retries):
             try:
                 request = self.youtube.videos().insert(
@@ -215,11 +259,32 @@ class YouTubeUploader:
                 )
 
                 response = None
+                consecutive_errors = 0
                 while response is None:
-                    status, response = request.next_chunk()
-                    if status:
-                        progress = int(status.progress() * 100)
-                        logger.info(f"  📤 Upload progress: {progress}%")
+                    try:
+                        status, response = request.next_chunk()
+                        consecutive_errors = 0
+                        if status:
+                            progress = int(status.progress() * 100)
+                            logger.info(f"  📤 Upload progress: {progress}%")
+                    except HttpError as e:
+                        if e.resp is not None and e.resp.status in (500, 502, 503, 504):
+                            consecutive_errors += 1
+                            if consecutive_errors > 5:
+                                raise
+                            wait = min(2 ** consecutive_errors, 60)
+                            logger.warning(f"⚠️ YouTube server {e.resp.status}, retry in {wait}s...")
+                            time.sleep(wait)
+                            continue
+                        raise
+                    except RETRIABLE as e:
+                        consecutive_errors += 1
+                        if consecutive_errors > 5:
+                            raise
+                        wait = min(5 * consecutive_errors, 60)
+                        logger.warning(f"⚠️ انقطاع شبكة ({e}) - نكمل الرفع من حيث توقف بعد {wait}s...")
+                        time.sleep(wait)
+                        continue
 
                 video_id = response["id"]
                 logger.info(f"✅ Upload complete! Video ID: {video_id}")
@@ -228,7 +293,6 @@ class YouTubeUploader:
 
             except Exception as e:
                 if attempt < max_retries - 1:
-                    import time
                     wait = (attempt + 1) * 10
                     logger.warning(f"⚠️ Upload attempt {attempt + 1} failed: {e}. Retrying in {wait}s...")
                     time.sleep(wait)

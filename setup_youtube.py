@@ -104,7 +104,7 @@ def main():
     print()
 
     flow = InstalledAppFlow.from_client_secrets_file(
-        str(CLIENT_SECRET_FILE),
+        str(target_secret_file),
         scopes=SCOPES,
     )
 

@@ -769,6 +769,128 @@ def main(test_mode=False):
     logger.info(f"🎉 Successfully completed! Total videos generated: {state['total_generated']}")
     return video_path
 
+# ============================================================
+# 🎬 LONG-VIDEO CLOUD PATH | المسار السحابي للفديوهات الطويلة
+#    يستخدم المحرك الموحّد القوي (quran_engine) لإنشاء سورة كاملة
+#    بالنص العثماني المتزامن + خلفيات Pexels تلقائياً، ويرفعها
+#    على يوتيوب كفيديو طويل (دعم LONG_YOUTUBE_* dual-project).
+# ============================================================
+
+CLOUD_MAX_AYAHS = 78   # حد آمن لـ GitHub Actions (timeout) — السور الأكبر يدوياً
+
+
+def pick_next_long_surah(state):
+    """دورة ذكية عبر السور الطويلة المناسبة للسحابة (تتخطى الضخمة جداً)."""
+    start_from = int(state.get("last_long_surah", 0) or 0)
+    for offset in range(1, 115):
+        s = ((start_from + offset - 1) % 114) + 1
+        if VERSE_COUNTS[s] <= CLOUD_MAX_AYAHS:
+            return s
+    return 78  # هود (أطول سورة ضمن الحد)
+
+
+def pick_next_long_reciter(state):
+    """قارئ سعودي بالتناوب (العجمي أولاً ثم بقية أئمة الحرم والقراء)."""
+    try:
+        from quran_data import RECITERS_ORDERED, SAUDI_RECITER_IDS
+    except Exception:
+        from quran_data import RECITERS_CATALOG
+        return RECITERS_CATALOG[0]
+    idx = int(state.get("last_long_reciter_idx", -1) or -1)
+    for offset in range(1, len(RECITERS_ORDERED) + 1):
+        i = (idx + offset) % len(RECITERS_ORDERED)
+        if RECITERS_ORDERED[i]["id"] in SAUDI_RECITER_IDS:
+            return RECITERS_ORDERED[i]
+    return RECITERS_ORDERED[0]
+
+
+def run_long_generation(state, test_mode=False):
+    """يولّد سورة كاملة طويلة بالمحرك الموحّد ويرفعها لليوتيوب."""
+    from quran_engine import render_long_quran_video
+
+    surah = pick_next_long_surah(state)
+    reciter = pick_next_long_reciter(state)
+    surah_name = SURAH_NAMES[surah - 1]
+
+    logger.info("=" * 60)
+    logger.info("🎬 LONG-VIDEO ENGINE (المحرك الموحّد) - سورة كاملة")
+    logger.info("=" * 60)
+    logger.info(f"🎯 الهدف: سورة {surah_name} كاملة ({VERSE_COUNTS[surah]} آية)")
+    logger.info(f"🎙️ القارئ: {reciter['name']}")
+
+    pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
+    if not pexels_key:
+        logger.warning("⚠️ PEXELS_API_KEY غير موجود - سيتم استخدام الخلفيات المحلية/الكاش.")
+
+    def _progress(pct, msg):
+        logger.info(f"[{pct}%] {msg}")
+
+    res = render_long_quran_video(
+        surah_num=surah,
+        reciter_id=reciter["id"],
+        mode="full",
+        aspect_ratio="16:9",
+        speed_mode="max",
+        progress_callback=_progress,
+        pexels_mode="auto",
+        pexels_api_key=pexels_key,
+    )
+
+    video_id = None
+    if not test_mode:
+        try:
+            from youtube_uploader import YouTubeUploader
+            uploader = YouTubeUploader(kind="long")
+            title = f"سورة {surah_name} كاملة | {reciter['name']} 🌿 تلاوة خاشعة بالرسم العثماني"
+            if len(title) > 95:
+                title = f"سورة {surah_name} كاملة | {reciter['name']} 🌿"
+            description = f"""📖 سورة {surah_name} كاملة ({res['ayahs_count']} آية)
+🎙️ القارئ: {res['reciter_name']}
+⏱️ المدة: {int(res['duration'] // 60)}:{int(res['duration'] % 60):02d} دقيقة
+
+تلاوة خاشعة لكلام الله بالرسم العثماني المُشكَّل، صدقة جارية لوجه الله تعالى.
+نسألكم صالح الدعاء بالمغفرة والرحمة لجميع موتى المسلمين. 🤲
+
+قال رسول الله ﷺ: «خيركم من تعلم القرآن وعلمه»
+
+#القرآن_الكريم #quran #تلاوة_خاشعة #سورة_{surah_name.replace(' ', '_')} #صدقة_جارية"""
+            tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
+                    f'سورة {surah_name}', 'سورة كاملة', 'صدقة جارية', 'خاشعة']
+            video_id = uploader.upload(res["video_path"], title, description, tags)
+        except Exception as e:
+            import traceback
+            logger.error(f"Upload error: {e}")
+            logger.error(traceback.format_exc())
+
+    state["total_generated"] = state.get("total_generated", 0) + 1
+    state["last_long_surah"] = surah
+    try:
+        from quran_data import RECITERS_ORDERED
+        state["last_long_reciter_idx"] = next(
+            (i for i, r in enumerate(RECITERS_ORDERED) if r["id"] == reciter["id"]),
+            state.get("last_long_reciter_idx", 0))
+    except Exception:
+        pass
+    state["history"].append({
+        "kind": "long",
+        "surah": surah,
+        "surah_name": surah_name,
+        "ayahs": res["ayahs_count"],
+        "reciter": reciter["name"],
+        "duration": round(res["duration"], 1),
+        "size_mb": res.get("size_mb"),
+        "video_id": video_id,
+        "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+    save_state(state)
+    logger.info(f"🎉 Long video done! Duration: {res['duration']:.1f}s, chapters: {res['chapters_count']}")
+    return res["video_path"]
+
+
 if __name__ == "__main__":
     test = "--test" in sys.argv
-    main(test_mode=test)
+    long_mode = "--long" in sys.argv
+    if long_mode:
+        run_long_generation(state=load_state(), test_mode=test)
+    else:
+        main(test_mode=test)
