@@ -1717,7 +1717,8 @@ def _fetch_surah_ayahs(reciter, surah_num, start_ayah, end_ayah, progress_cb=Non
         if not p:
             failed.append(a)
         else:
-            ordered.append({"ayah": a, "audio_path": p, "duration": d, "text": t})
+            ordered.append({"surah": surah_num, "ayah": a,
+                            "audio_path": p, "duration": d, "text": t})
 
     if failed:
         ratio = len(failed) / max(1, total)
@@ -1778,6 +1779,21 @@ def create_chapter_overlay_image(width, height, chapter, surah_num, reciter,
     is_makkah = is_makki(surah_num)
     revelation = "مكية" if is_makkah else "مدنية"
     ayahs = [a for a in chapter["ayahs"] if a.get("text")]
+    # دعم الفصول المختلطة (تجميع/رقية): آيات من أكثر من سورة في فصل واحد
+    chapter_surahs = []
+    for a in chapter["ayahs"]:
+        s = a.get("surah", surah_num)
+        if s not in chapter_surahs:
+            chapter_surahs.append(s)
+    if len(chapter_surahs) > 1:
+        names = " + ".join(SURAH_NAMES[s - 1] for s in chapter_surahs[:4])
+        if len(chapter_surahs) > 4:
+            names += " + ..."
+        head_label = f"❖  {names}  ❖"
+        revelation_label = None
+    else:
+        head_label = f"❖  سورة {surah_name}  |  {revelation}  ❖"
+        revelation_label = revelation
     gold = (220, 185, 90, 240)
     cream = (245, 230, 180, 255)
     white = (255, 255, 255, 255)
@@ -1792,7 +1808,7 @@ def create_chapter_overlay_image(width, height, chapter, surah_num, reciter,
 
     # الترويسة: اسم السورة + الوحي
     f_head = ImageFont.truetype(font_path, int(height * 0.030))
-    head = reshape_text(f"❖  سورة {surah_name}  |  {revelation}  ❖", font_path=font_path)
+    head = reshape_text(head_label, font_path=font_path)
     bb = draw.textbbox((0, 0), head, font=f_head)
     draw.text(((width - (bb[2] - bb[0])) // 2, int(height * 0.032)), head,
               font=f_head, fill=gold, stroke_width=2, stroke_fill=(0, 0, 0, 230))
@@ -1997,70 +2013,35 @@ def resolve_long_backgrounds(n, aspect_ratio, bg_video_filename=None,
     return paths[:n]
 
 
-def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, end_ayah=None,
-                            bg_video_filename=None, aspect_ratio="16:9", speed_mode="max",
-                            progress_callback=None, pexels_mode="auto", pexels_api_key=None):
-    """المحرك الموحّد القوي للفديوهات القرآنية الطويلة (السورة الكاملة).
+def _assemble_long_video(segments, reciter, label, out_prefix="Quran",
+                         bg_video_filename=None, aspect_ratio="16:9", speed_mode="max",
+                         progress_callback=None, pexels_mode="auto", pexels_api_key=None):
+    """قلب التجميع الموحّد: من segments جاهزة (صوت+نص+مدة) إلى فيديو طويل كامل.
 
-    يجمع: قوة FFmpeg/QSV (سرعة) + تزامن الريلز (نص كل آية) + خلفيات Pexels.
-    مناسب من 10 ثوانٍ حتى ساعتين+ (سورة البقرة كاملة) برامات منخفضة.
+    segments: [{"surah": int, "ayah": int, "text": str, "audio_path": str, "duration": float}]
+    label:    {"surah_num": int, "surah_name": str, "range_label": str}
+    out_prefix: "Quran" | "Majmou3" | "Ruqyah" (بادئة اسم الملف)
     """
     def update_p(percent, msg):
         if progress_callback:
             progress_callback(percent, msg)
         logger.info(f"[{percent}%] {msg}")
 
-    update_p(4, "جاري تهيئة المحرك الموحّد للفيديو الطويل...")
-
-    if not (1 <= surah_num <= 114):
-        raise ValueError(f"رقم السورة غير صالح: {surah_num}")
-    reciter = get_reciter_by_id(reciter_id)
-    if reciter.get("id") == "mohamed_refaat":
-        raise RuntimeError(
-            "الشيخ محمد رفعت متاح فقط بالمسار الكلاسيكي (تسجيلاته 31 سورة وبصوت بديل في المقاطع). "
-            "اختر قارئاً سعودياً (الشيخ العجمي / السديس / المعيقلي) أو القارئ الكلاسيكي."
-        )
-    surah_name = SURAH_NAMES[surah_num - 1]
-    max_v = VERSE_COUNTS[surah_num]
-
-    if mode == "full":
-        start_ayah, end_ayah = 1, max_v
-    else:
-        try:
-            start_ayah = int(start_ayah) if start_ayah else 1
-            end_ayah = int(end_ayah) if end_ayah else max_v
-        except Exception:
-            start_ayah, end_ayah = 1, max_v
-        start_ayah = max(1, min(start_ayah, max_v))
-        end_ayah = max(1, min(end_ayah, max_v))
-        if end_ayah < start_ayah:
-            start_ayah, end_ayah = end_ayah, start_ayah
-
-    update_p(6, f"المطلوب: سورة {surah_name} ({start_ayah}-{end_ayah}) بصوت {reciter['name']}")
-
-    # 1) الآيات: صوت مقصوص + نص عثماني + مدة دقيقة (تزامن 100%)
-    ayahs = _fetch_surah_ayahs(reciter, surah_num, start_ayah, end_ayah, update_p)
-    total_audio = sum(a["duration"] for a in ayahs)
-    if total_audio < 3:
-        raise RuntimeError("الصوت الناتج قصير جداً أو تالف، أعد المحاولة")
-    update_p(26, f"تم تجهيز {len(ayahs)} آية - المدة الإجمالية {total_audio/60:.1f} دقيقة")
-
-    # 2) دمج الصوت في مسار واحد
     update_p(28, "جاري دمج التلاوة في مسار صوتي واحد...")
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_reciter = "".join(c for c in reciter['id'] if c.isalnum() or c in ('_', '-'))[:40]
-    joint_mp3 = AUDIO_CACHE_DIR / f"long_{safe_reciter}_{surah_num:03d}_{start_ayah}_{end_ayah}_{timestamp}.mp3"
-    concat_audio_files_ffmpeg([a["audio_path"] for a in ayahs], joint_mp3)
+    joint_mp3 = AUDIO_CACHE_DIR / f"long_{safe_reciter}_{out_prefix}_{timestamp}.mp3"
+    concat_audio_files_ffmpeg([a["audio_path"] for a in segments], joint_mp3)
     duration = get_audio_duration(str(joint_mp3))
     if duration < 3:
         raise RuntimeError("ملف الصوت المدمج تالف، أعد المحاولة")
-    logger.info(f"Long video audio: {duration:.1f}s ({len(ayahs)} ayahs)")
+    logger.info(f"Long video audio: {duration:.1f}s ({len(segments)} ayahs)")
 
-    # 3) الفصول النصية (صفحات المصحف)
-    chapters = group_ayahs_into_chapters(ayahs)
+    # الفصول النصية (صفحات المصحف)
+    chapters = group_ayahs_into_chapters(segments)
     update_p(30, f"تم تقسيم التلاوة إلى {len(chapters)} صفحة قرآنية متزامنة...")
 
-    # 4) الخلفيات الطبيعية (Pexels تلقائياً + احتياطي محلي)
+    # الخلفيات الطبيعية (Pexels تلقائياً + احتياطي محلي)
     n_bg = min(max(2, len(chapters) // 4), 8)
     bg_list = resolve_long_backgrounds(n_bg, aspect_ratio,
                                        bg_video_filename=bg_video_filename,
@@ -2069,14 +2050,14 @@ def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, en
                                        progress_cb=update_p)
     update_p(38, f"تم تجهيز {len(bg_list)} خلفيات طبيعية متتالية...")
 
-    # 5) صور كل فصل (نصوص الآيات بالرسم العثماني)
+    # صور كل فصل (نصوص الآيات بالرسم العثماني)
     width, height = (1920, 1080) if aspect_ratio == "16:9" else (1080, 1920)
     chapter_pngs = []
     for i, ch in enumerate(chapters, start=1):
         try:
             png = create_chapter_overlay_image(
                 width=width, height=height, chapter=ch,
-                surah_num=surah_num, reciter=reciter,
+                surah_num=label.get("surah_num", 1), reciter=reciter,
                 page_no=i, total_pages=len(chapters))
             chapter_pngs.append(png)
         except Exception as e:
@@ -2086,13 +2067,12 @@ def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, en
         raise RuntimeError("تعذر توليد صفحات النص القرآني")
     update_p(44, f"تم تصميم {len(chapter_pngs)} صفحة بالرسم العثماني المُشكَّل")
 
-    # 6) التركيب النهائي عبر FFmpeg
+    # التركيب النهائي عبر FFmpeg
     if speed_mode not in ("max", "balanced"):
         speed_mode = "max"
     video_codec_args, codec_label = build_video_codec_args(speed_mode)
     update_p(46, f"وضع الرندر: {codec_label}")
 
-    # أوقات الفصول (تراكمية) للتزامن الدقيق
     cum = 0.0
     chapter_times = []
     for ch in chapters[:len(chapter_pngs)]:
@@ -2113,7 +2093,6 @@ def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, en
     n_txt_in = len(chapter_pngs)
     ffmpeg_inputs += ["-i", str(joint_mp3)]
 
-    # فلتر: خلفيات مدمجة ← طبقات النص متسلسلة بإظهار زمني دقيق
     parts = []
     for i in range(n_bg_in):
         parts.append(f"[{i}:v]scale=w={width}:h={height}:force_original_aspect_ratio=increase,"
@@ -2138,7 +2117,9 @@ def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, en
     filter_complex = ";".join(parts)
     audio_filter = build_audio_mood_filter("none", duration)
 
-    out_filename = f"Quran_{surah_name}_{start_ayah}_{end_ayah}_{safe_reciter}_{timestamp}.mp4"
+    safe_name = "".join(c for c in label.get("surah_name", "Quran")
+                        if c.isalnum() or c in ('_', '-'))[:40] or "Quran"
+    out_filename = f"{out_prefix}_{safe_name}_{safe_reciter}_{timestamp}.mp4"
     out_video_path = VIDEO_OUT_DIR / out_filename
     update_p(50, f"جاري الرندر السينمائي ({duration/60:.1f} دقيقة • {len(chapter_pngs)} صفحة)...")
 
@@ -2149,7 +2130,7 @@ def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, en
                   "-c:a", "aac", "-b:a", "192k", "-ar", "44100",
                   "-t", f"{duration:.2f}", "-movflags", "+faststart", "-shortest",
                   str(out_video_path)]
-    logger.info(f"Running FFmpeg (long engine): inputs={n_bg_in + n_txt_in + 1}")
+    logger.info(f"Running FFmpeg (unified long): inputs={n_bg_in + n_txt_in + 1}")
     ffmpeg_log_file = AUDIO_CACHE_DIR / "ffmpeg_render.log"
 
     def run_ffmpeg(cmd):
@@ -2219,7 +2200,7 @@ def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, en
     try:
         thumb_name = Path(out_filename).stem + "_thumb.jpg"
         thumb_path = str(VIDEO_OUT_DIR / thumb_name)
-        generate_thumbnail_image(bg_list[0], f"سورة {surah_name} كاملة",
+        generate_thumbnail_image(bg_list[0], label.get("thumb_title", label.get("surah_name", "")),
                                  small_title=reciter["name"], out_path=thumb_path)
         thumb_url = f"/outputs/video/{thumb_name}"
     except Exception as e:
@@ -2235,9 +2216,9 @@ def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, en
         'filename': out_filename,
         'duration': round(duration, 1),
         'size_mb': size_mb,
-        'surah_name': surah_name,
-        'surah_num': surah_num,
-        'ayah_range_label': ("كاملة" if mode == "full" else f"الآيات {start_ayah}-{end_ayah}"),
+        'surah_name': label.get("surah_name", ""),
+        'surah_num': label.get("surah_num"),
+        'ayah_range_label': label.get("range_label", ""),
         'reciter_name': reciter['name'],
         'vintage_effect': 'none',
         'speed_mode': speed_mode,
@@ -2246,9 +2227,124 @@ def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, en
         'thumbnail': thumb_path,
         'thumbnail_url': thumb_url,
         'chapters_count': len(chapter_pngs),
-        'ayahs_count': len(ayahs),
+        'ayahs_count': len(segments),
         'engine': 'unified_long',
     }
+
+
+def render_long_batch_video(segments, reciter_id, job_title="", out_prefix="Majmou3",
+                            bg_video_filename=None, aspect_ratio="16:9", speed_mode="max",
+                            progress_callback=None, pexels_mode="auto", pexels_api_key=None):
+    """المحرك الموحّد لأي فيديو طويل متعدد المصادر: تجميع سور أو رقية شرعية.
+
+    segments: [{"surah": int, "start": int, "end": int}, ...]  (مدى آيات لكل عنصر)
+    job_title: العنوان الرئيسي للفيديو (يظهر في الترويسة العامة + الميتاداتا).
+    """
+    def update_p(percent, msg):
+        if progress_callback:
+            progress_callback(percent, msg)
+        logger.info(f"[{percent}%] {msg}")
+
+    if not segments:
+        raise ValueError("القائمة فارغة - أضف سورة واحدة على الأقل")
+
+    reciter = get_reciter_by_id(reciter_id)
+    update_p(4, f"جاري تهيئة المحرك الموحّد: {job_title or 'تجميع قرآني'} بصوت {reciter['name']}")
+
+    # 1) جلب آيات كل عنصر (صوت + نص + مدة)
+    all_ayahs = []
+    surah_labels = []
+    for idx, seg in enumerate(segments, start=1):
+        s = int(seg["surah"])
+        a = int(seg.get("start", 1))
+        b = int(seg.get("end", VERSE_COUNTS.get(s, 7)))
+        a = max(1, min(a, VERSE_COUNTS.get(s, 7)))
+        b = max(1, min(b, VERSE_COUNTS.get(s, 7)))
+        if b < a:
+            a, b = b, a
+        update_p(5 + int(15 * idx / max(1, len(segments))),
+                 f"جاري تجهيز المقطع {idx}/{len(segments)}: سورة {SURAH_NAMES[s-1]} ({a}-{b})...")
+        part = _fetch_surah_ayahs(reciter, s, a, b, update_p)
+        all_ayahs.extend(part)
+        lbl = SURAH_NAMES[s - 1] + (f" ({a}-{b})" if (a, b) != (1, VERSE_COUNTS[s]) else " كاملة")
+        if lbl not in surah_labels:
+            surah_labels.append(lbl)
+
+    if not all_ayahs:
+        raise RuntimeError("لم يتمكن المحرك من جلب أي آية. تحقق من الإنترنت وحاول مرة أخرى.")
+
+    label = {
+        "surah_num": all_ayahs[0]["surah"],
+        "surah_name": job_title or (" + ".join(surah_labels[:3]) + ("..." if len(surah_labels) > 3 else "")),
+        "range_label": " + ".join(surah_labels[:6]) + ("..." if len(surah_labels) > 6 else ""),
+        "thumb_title": job_title or " + ".join(surah_labels[:3]),
+    }
+    update_p(24, f"تم تجهيز {len(all_ayahs)} آية - المجموع {sum(x['duration'] for x in all_ayahs)/60:.1f} دقيقة")
+    return _assemble_long_video(
+        segments=all_ayahs, reciter=reciter, label=label, out_prefix=out_prefix,
+        bg_video_filename=bg_video_filename, aspect_ratio=aspect_ratio,
+        speed_mode=speed_mode, pexels_mode=pexels_mode, pexels_api_key=pexels_api_key,
+        progress_callback=progress_callback)
+
+
+def render_long_quran_video(surah_num, reciter_id, mode="full", start_ayah=1, end_ayah=None,
+                            bg_video_filename=None, aspect_ratio="16:9", speed_mode="max",
+                            progress_callback=None, pexels_mode="auto", pexels_api_key=None):
+    """المحرك الموحّد القوي للفديوهات القرآنية الطويلة (السورة الكاملة).
+
+    يجمع: قوة FFmpeg/QSV (سرعة) + تزامن الريلز (نص كل آية) + خلفيات Pexels.
+    مناسب من 10 ثوانٍ حتى ساعتين+ (سورة البقرة كاملة) برامات منخفضة.
+    """
+    def update_p(percent, msg):
+        if progress_callback:
+            progress_callback(percent, msg)
+        logger.info(f"[{percent}%] {msg}")
+
+    update_p(4, "جاري تهيئة المحرك الموحّد للفيديو الطويل...")
+
+    if not (1 <= surah_num <= 114):
+        raise ValueError(f"رقم السورة غير صالح: {surah_num}")
+    reciter = get_reciter_by_id(reciter_id)
+    if reciter.get("id") == "mohamed_refaat":
+        raise RuntimeError(
+            "الشيخ محمد رفعت متاح فقط بالمسار الكلاسيكي (تسجيلاته 31 سورة وبصوت بديل في المقاطع). "
+            "اختر قارئاً سعودياً (الشيخ العجمي / السديس / المعيقلي) أو القارئ الكلاسيكي."
+        )
+    surah_name = SURAH_NAMES[surah_num - 1]
+    max_v = VERSE_COUNTS[surah_num]
+
+    if mode == "full":
+        start_ayah, end_ayah = 1, max_v
+    else:
+        try:
+            start_ayah = int(start_ayah) if start_ayah else 1
+            end_ayah = int(end_ayah) if end_ayah else max_v
+        except Exception:
+            start_ayah, end_ayah = 1, max_v
+        start_ayah = max(1, min(start_ayah, max_v))
+        end_ayah = max(1, min(end_ayah, max_v))
+        if end_ayah < start_ayah:
+            start_ayah, end_ayah = end_ayah, start_ayah
+
+    update_p(6, f"المطلوب: سورة {surah_name} ({start_ayah}-{end_ayah}) بصوت {reciter['name']}")
+
+    # 1) الآيات: صوت مقصوص + نص عثماني + مدة دقيقة (تزامن 100%)
+    ayahs = _fetch_surah_ayahs(reciter, surah_num, start_ayah, end_ayah, update_p)
+    total_audio = sum(a["duration"] for a in ayahs)
+    if total_audio < 3:
+        raise RuntimeError("الصوت الناتج قصير جداً أو تالف، أعد المحاولة")
+    update_p(26, f"تم تجهيز {len(ayahs)} آية - المدة الإجمالية {total_audio/60:.1f} دقيقة")
+
+
+    # 2-6) التجميع الموحّد (الصوت + الصفحات + الخلفيات + الرندر + المصغرة)
+    return _assemble_long_video(
+        segments=ayahs, reciter=reciter,
+        label={'surah_num': surah_num, 'surah_name': surah_name,
+                'range_label': ('كاملة' if mode == 'full' else f'الآيات {start_ayah}-{end_ayah}')},
+        out_prefix='Quran',
+        bg_video_filename=bg_video_filename, aspect_ratio=aspect_ratio,
+        speed_mode=speed_mode, pexels_mode=pexels_mode,
+        pexels_api_key=pexels_api_key, progress_callback=progress_callback)
 
 
 def render_compilation_video(items, reciter_id, bg_filenames=None,

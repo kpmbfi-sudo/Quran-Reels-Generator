@@ -122,7 +122,8 @@ def get_config():
 
     return jsonify({
         'surahs': surahs_list,
-        'reciters': RECITERS_CATALOG,
+        'reciters': [r for r in RECITERS_CATALOG if r['id'] == 'ajamy'] +
+                    [r for r in RECITERS_CATALOG if r['id'] != 'ajamy'],
         'total_generated': state.get('total_generated', 0)
     })
 

@@ -1,14 +1,15 @@
-# 🎬 Daily Long Quran Video - صدقة جارية (السورة الكاملة)
-# ينشئ فيديو طويلاً (سورة كاملة) كل يوم بالرسم العثماني المتزامن + خلفيات Pexels
-# ويرفعه على يوتيوب كفيديو طويل (يستخدم LONG_YOUTUBE_* dual-project)
-#
-# التوقيت: 9:00 صباحاً UTC يومياً (12:00 ظهراً بتوقيت مكة/القاهرة)
+# 🔥 Daily Quran Batch - 3 Long Videos | صدقة جارية مدى الحياة
+# ينشئ يومياً 3 فيديوهات طويلة بصوت الشيخ أحمد بن علي العجمي:
+#   [1] سورة كاملة بالنص العثماني المتزامن
+#   [2] تجميع سور قرآنية
+#   [3] رقية شرعية بكتاب الله
+# خلفيات طبيعية نقية 100% من Pexels (لا بشر ولا كائنات حية)
 
-name: 🎬 Daily Long Quran Video (Full Surah)
+name: 🔥 Daily Quran Batch (3 Long Videos · Ajamy)
 
 on:
   schedule:
-    - cron: '0 9 * * *'
+    - cron: '0 9 * * *'   # يومياً 9:00 UTC (12:00 ظهراً مكة/القاهرة)
   workflow_dispatch:
     inputs:
       test_mode:
@@ -18,7 +19,7 @@ on:
         type: boolean
 
 concurrency:
-  group: quran-long-video
+  group: quran-daily-batch
   cancel-in-progress: false
 
 permissions:
@@ -27,14 +28,14 @@ permissions:
 
 env:
   PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-  YOUTUBE_CLIENT_ID: ${{ secrets.LONG_YOUTUBE_CLIENT_ID }}
-  YOUTUBE_CLIENT_SECRET: ${{ secrets.LONG_YOUTUBE_CLIENT_SECRET }}
-  YOUTUBE_REFRESH_TOKEN: ${{ secrets.LONG_YOUTUBE_REFRESH_TOKEN }}
+  LONG_YOUTUBE_CLIENT_ID: ${{ secrets.LONG_YOUTUBE_CLIENT_ID }}
+  LONG_YOUTUBE_CLIENT_SECRET: ${{ secrets.LONG_YOUTUBE_CLIENT_SECRET }}
+  LONG_YOUTUBE_REFRESH_TOKEN: ${{ secrets.LONG_YOUTUBE_REFRESH_TOKEN }}
 
 jobs:
-  generate-long-video:
+  generate-daily-batch:
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 200
 
     steps:
       - name: 📥 Checkout Repository
@@ -71,38 +72,35 @@ jobs:
         run: |
           mkdir -p outputs/audio outputs/video backgrounds/cache
 
-      - name: 🎬 Generate Long Quran Video (Full Surah)
-        id: generate
+      - name: 🎬 Generate Daily Batch (3 Long Videos · Sheikh Ajamy)
         run: |
-          echo "=== Python version ==="
-          python --version
-          echo "=== FFmpeg ==="
-          ffmpeg -version | head -1
+          echo "=== Python ===" && python --version
+          echo "=== FFmpeg ===" && ffmpeg -version | head -1
           echo "=== Engine modules check ==="
-          python -c "import quran_engine, quran_data, pexels_api; print('✅ unified engine OK')"
-          echo "=== Starting long generation ==="
+          python -c "import quran_engine, quran_data, pexels_api, ruqyah_data; print('✅ unified engine OK')"
+          echo "=== Starting daily batch (surah + compilation + ruqyah) ==="
           if [ "${{ github.event.inputs.test_mode }}" == "true" ]; then
-            python auto_generate.py --long --test 2>&1 || true
+            python auto_generate.py --batch --test 2>&1 || true
           else
-            python auto_generate.py --long 2>&1 || true
+            python auto_generate.py --batch 2>&1 || true
           fi
-          echo "=== Output files ==="
-          find outputs/ -type f -size +100k 2>/dev/null || echo "No large output files"
+          echo "=== Output videos ==="
+          find outputs/video -name "*.mp4" -type f -printf "%s\t%p\n" 2>/dev/null | sort -rn | head -10 || echo "No videos"
 
       - name: 💾 Save State
         run: |
           git config user.name "Quran Reels Bot"
           git config user.email "quran-reels-bot@users.noreply.github.com"
           git add state.json
-          git diff --cached --quiet || git commit -m "🎬 Long video state: $(date '+%Y-%m-%d %H:%M')"
-          git pull --rebase origin main || git pull --rebase origin master || true
+          git diff --cached --quiet || git commit -m "🔥 Daily batch state: $(date '+%Y-%m-%d %H:%M')"
+          git pull --rebase origin main || true
           git push || echo "⚠️ Push failed - state will be updated next run"
 
-      - name: 📤 Upload Video Artifact
+      - name: 📤 Upload Videos Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: long-quran-video-${{ github.run_number }}
+          name: daily-batch-videos-${{ github.run_number }}
           path: outputs/video/*.mp4
           retention-days: 3
 
@@ -110,7 +108,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: long-video-log-${{ github.run_number }}
+          name: daily-batch-log-${{ github.run_number }}
           path: auto_generate.log
           retention-days: 3
 
@@ -129,8 +127,8 @@ jobs:
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: '🎬 Long video generation failed! - ' + new Date().toISOString().split('T')[0],
-                body: `## ⚠️ Long-Video Workflow Failed\n\n**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n**Date:** ${new Date().toISOString()}\n\nCheck the logs for details.`,
+                title: '🔥 Daily batch failed! - ' + new Date().toISOString().split('T')[0],
+                body: `## ⚠️ Daily Batch Workflow Failed\n\n**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n**Date:** ${new Date().toISOString()}\n\nCheck the logs for details.`,
                 labels: ['bot-failure']
               });
             }
