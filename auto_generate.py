@@ -31,6 +31,20 @@ from quran_engine import get_reciter_by_id
 if not hasattr(Image, 'ANTIALIAS'):
     Image.ANTIALIAS = Image.LANCZOS
 
+# Force Pillow to use BASIC layout engine on all platforms (Ubuntu/Linux & Windows).
+try:
+    _orig_truetype = ImageFont.truetype
+    def _safe_truetype(font=None, size=10, *args, **kwargs):
+        if "layout_engine" not in kwargs and hasattr(ImageFont, "Layout"):
+            try:
+                kwargs["layout_engine"] = ImageFont.Layout.BASIC
+            except Exception:
+                pass
+        return _orig_truetype(font, size, *args, **kwargs)
+    ImageFont.truetype = _safe_truetype
+except Exception:
+    pass
+
 # Arabic text processing
 try:
     import arabic_reshaper

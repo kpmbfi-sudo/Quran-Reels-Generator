@@ -39,6 +39,21 @@ from PIL import Image, ImageDraw, ImageFont
 if not hasattr(Image, 'ANTIALIAS'):
     Image.ANTIALIAS = Image.LANCZOS
 
+# Force Pillow to use BASIC layout engine on all platforms (Ubuntu/Linux & Windows).
+# This prevents Linux libraqm/HarfBuzz from double-reversing Arabic text already reshaped by arabic-reshaper + python-bidi.
+try:
+    _orig_truetype = ImageFont.truetype
+    def _safe_truetype(font=None, size=10, *args, **kwargs):
+        if "layout_engine" not in kwargs and hasattr(ImageFont, "Layout"):
+            try:
+                kwargs["layout_engine"] = ImageFont.Layout.BASIC
+            except Exception:
+                pass
+        return _orig_truetype(font, size, *args, **kwargs)
+    ImageFont.truetype = _safe_truetype
+except Exception:
+    pass
+
 import requests
 import arabic_reshaper
 from bidi.algorithm import get_display
