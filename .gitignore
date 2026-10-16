@@ -17,6 +17,8 @@ outputs/
 *.mov
 *.mkv
 *.webm
+!backgrounds/*.mp4
+!backgrounds/*.mov
 test_*.png
 *_thumb.jpg
 
