@@ -1,5 +1,5 @@
 {
-  "total_generated": 1,
+  "total_generated": 2,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
@@ -15,7 +15,15 @@
       "duration": 32.7,
       "video_id": "8OqZfFnzMoo",
       "date": "2026-10-16 14:16:38"
+    },
+    {
+      "kind": "compilation",
+      "title": "جزء تبارك المختصر | الملك والقلم والحاقة والمعارج ونوح",
+      "ayahs": 148,
+      "duration": 1252.3,
+      "video_id": "2IGiap3EUHM",
+      "date": "2026-10-16 17:57:12"
     }
   ],
-  "daily_cycle_idx": 1
+  "daily_cycle_idx": 2
 }
