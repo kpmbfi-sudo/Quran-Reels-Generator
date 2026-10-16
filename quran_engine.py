@@ -2059,8 +2059,8 @@ def _assemble_long_video(segments, reciter, label, out_prefix="Quran",
     chapters = group_ayahs_into_chapters(segments)
     update_p(30, f"تم تقسيم التلاوة إلى {len(chapters)} صفحة قرآنية متزامنة...")
 
-    # الخلفيات الطبيعية (Pexels تلقائياً + احتياطي محلي)
-    n_bg = min(max(2, len(chapters) // 4), 8)
+    # خلفية طبيعية واحدة مستمرة لكامل الفيديو (0% تشتيت، مشهد واحد متصل وهادئ 100%)
+    n_bg = 1
     bg_list = resolve_long_backgrounds(n_bg, aspect_ratio,
                                        bg_video_filename=bg_video_filename,
                                        pexels_mode=pexels_mode,

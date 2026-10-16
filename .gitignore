@@ -24,7 +24,8 @@ test_*.png
 # 🖼️ Backgrounds (auto-fetched from Pexels - never bundle)
 # Local nature clips are downloaded at runtime; keep repo tiny.
 # =================================================================
-backgrounds/
+backgrounds/cache/
+backgrounds/thumbnails/
 vision/
 
 # =================================================================

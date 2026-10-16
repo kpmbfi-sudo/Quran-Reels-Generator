@@ -40,44 +40,34 @@ PEXELS_SEARCH_URL = "https://api.pexels.com/videos/search"
 #    جاهزة لكل من النمط العمودي (9:16) والأفقي (16:9).
 # =================================================================
 PURE_NATURE_QUERIES = [
-    "clouds timelapse sky",
-    "ocean waves aerial scenery",
-    "calm sea water surface",
-    "waterfall cascading rocks",
-    "galaxy stars space timelapse",
-    "night sky milky way",
-    "aurora borealis northern lights",
-    "foggy forest trees mist",
-    "rain drops water surface",
-    "snow mountain peak landscape",
-    "desert sand dunes wind",
-    "sunlight through forest trees",
-    "lake water mountain reflection",
-    "river flowing stream stones",
-    "sunset horizon clouds red",
-    "green moss forest stream",
-    "bamboo forest canopy breeze",
-    "pine trees winter snow frost",
-    "crystal blue water ripple",
-    "mist over peaceful lake sunrise",
+    "rain window static camera",
+    "calm lake water still shot",
+    "gentle rain forest leaves tripod",
+    "fireplace burning static camera",
+    "campfire glowing embers still",
+    "calm sea water surface still",
+    "mist over peaceful lake sunrise tripod",
+    "green moss forest stream static",
+    "rain drops water surface still",
+    "bamboo forest gentle breeze still camera",
 ]
 
-# استعلامات أطول مدةً (للفيديوهات الطويلة نريد مشاهد بطيئة ممتدة)
+# استعلامات المشاهد الهادئة الثابتة (0% حركة كاميرا - كادر ثابت تماماً)
 LONG_SCENE_QUERIES = [
-    "slow motion clouds sky",
-    "aerial mountains landscape",
-    "ocean waves slow motion",
-    "forest canopy drone aerial",
-    "desert dunes slow",
-    "lake reflection calm morning",
-    "milky way timelapse night",
-    "rain forest slow motion",
+    "rain falling window static tripod",
+    "calm lake reflection still camera",
+    "fireplace burning static camera",
+    "ocean waves shore still tripod",
+    "gentle stream water static shot",
+    "night sky stars static camera",
+    "rain forest still shot tripod",
 ]
 
 # =================================================================
 # 🚫 كلمات محظورة (تُرفض بمجرد ظهور أي منها)
 # =================================================================
 BANNED_KEYWORDS = [
+    # كائنات حية وبشر
     "person", "people", "man", "woman", "girl", "boy", "human", "face",
     "portrait", "model", "child", "baby", "kid", "couple", "family", "crowd",
     "walking", "dancer", "fashion", "hand", "hands", "feet", "body", "selfie",
@@ -85,6 +75,10 @@ BANNED_KEYWORDS = [
     "dress", "shirt", "shoe", "run", "running", "yoga", "gym",
     "animal", "dog", "cat", "bird", "lion", "horse", "fish", "creature", "pet",
     "wildlife", "insect", "bear", "deer", "monkey", "tiger", "shark", "whale",
+    # حركة الكاميرا والتشويش البصري (سياسة 0% حركة كاميرا)
+    "drone", "aerial", "flying", "flyover", "fpv", "gimbal", "handheld",
+    "pan", "panning", "tilt", "tilting", "zoom", "zooming", "hyperlapse",
+    "tracking", "follow", "motion blur", "fast motion", "action", "pov",
 ]
 
 # قفل بسيط لتجنب الطلبات المتزامنة المتكررة (thread-safe caching)
