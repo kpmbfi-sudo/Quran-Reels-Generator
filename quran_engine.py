@@ -171,7 +171,8 @@ def sanitize_for_font(text, font_path):
 
 def reshape_text(text, font_path=None):
     """Format Arabic text with proper ligatures and RTL ordering.
-    When font_path is given, unsupported glyphs are sanitized first (no tofu boxes)."""
+    When font_path is given, unsupported glyphs are sanitized first (no tofu boxes).
+    Includes NFKD normalization fallback for fonts (like Lalezar) lacking presentation forms."""
     if not text:
         return ""
     if font_path:
@@ -179,8 +180,24 @@ def reshape_text(text, font_path=None):
         if not text:
             return ""
     try:
+        import unicodedata
         reshaped = _reshaper.reshape(text)
-        return get_display(reshaped)
+        displayed = get_display(reshaped)
+        if font_path:
+            cmap = _font_cmap(font_path)
+            if cmap:
+                fixed = []
+                for c in displayed:
+                    if ord(c) in cmap:
+                        fixed.append(c)
+                    else:
+                        nfkd = unicodedata.normalize('NFKD', c)
+                        if all(ord(ch) in cmap for ch in nfkd):
+                            fixed.append(nfkd)
+                        else:
+                            fixed.append(c)
+                return "".join(fixed)
+        return displayed
     except Exception:
         return text
 
@@ -1001,18 +1018,11 @@ def render_quran_video(
         raise RuntimeError("ملف الصوت الناتج تالف أو قصير جداً، أعد المحاولة")
     logger.info(f"Audio Duration: {duration:.2f}s")
     
-    # 3. Create High-Res Overlay Graphic (intro only: fades in/out in first seconds)
+    # 3. Ambient Background Setup (clean video, 0% text overlay)
     filter_chain, width, height = build_ffmpeg_filter(
         aspect_ratio, vintage_effect, bg_is_image=bg_is_image, duration=duration
     )
-    overlay_png = create_vintage_overlay_image(
-        width, height, surah_num, reciter,
-        ayah_range_text=ayah_range_label,
-        custom_ayah_text=custom_ayah_text
-    )
-    fade_in, fade_out_start, fade_out_dur = build_intro_fade_filter(duration)
-    
-    update_p(40, f"تم تصميم إطار الزمن الجميل ({width}x{height}) بنجاح")
+    update_p(40, f"تم إعداد الخلفية الطبيعية الهادئة ({width}x{height}) بنجاح")
     
     # 4. Generate Output Video via Native FFmpeg
     # SMART LOOP: background repeats seamlessly to EXACTLY match surah duration.
@@ -1033,16 +1043,7 @@ def render_quran_video(
     else:
         input_args = ["-stream_loop", "-1", "-i", bg_path]
 
-    # FFmpeg command:
-    # - background loops/moves for the EXACT audio duration (video loops, image drifts slowly)
-    # - overlay (all text/frames) appears ONCE in the first seconds, fades out softly,
-    #   then its stream is CUT OFF entirely (eof_action=pass) so it can NEVER reappear.
-    overlay_fade = (
-        f"format=rgba,"
-        f"fade=t=in:st=0:d={fade_in:.1f}:alpha=1,"
-        f"fade=t=out:st={fade_out_start:.1f}:d={fade_out_dur:.1f}:alpha=1"
-    )
-    overlay_cut = round(fade_out_start + fade_out_dur + 0.5, 1)  # stream ends right after fade-out
+    # FFmpeg command: clean ambient video loop + recitation audio (no text overlay on video)
     if speed_mode not in ("max", "balanced"):
         speed_mode = "max"
     video_codec_args, codec_label = build_video_codec_args(speed_mode)
@@ -1050,12 +1051,11 @@ def render_quran_video(
     ffmpeg_cmd = [
         "ffmpeg", "-y",
         *input_args,
-        "-loop", "1", "-framerate", "30", "-t", f"{overlay_cut}", "-i", overlay_png,
         "-i", audio_path,
         "-filter_complex",
-        f"[1:v]{overlay_fade}[ov];[0:v]{filter_chain}[vbg];[vbg][ov]overlay=0:0:eof_action=pass:format=yuv420[vout]",
+        f"[0:v]{filter_chain},setsar=1[vout]",
         "-map", "[vout]",
-        "-map", "2:a",
+        "-map", "1:a",
         *video_codec_args,
         "-af", audio_filter,
         "-c:a", "aac",
@@ -1317,70 +1317,133 @@ def create_multisegment_overlay_image(width, height, center_title, top_label,
 
 
 def generate_thumbnail_image(bg_path, hook_text, small_title, out_path, progress_cb=None):
-    """Builds a 1280x720 YouTube thumbnail: same background + bold hook words.
+    """Builds a 1280x720 YouTube thumbnail: background frame + bold hook words in Lalezar.
 
-    hook_text: 1-2 short lines, simple Arabic (user's hook).
-    small_title: gold top line (e.g. surah/reciter name).
+    hook_text: 3-4 words psychological comfort hook (in Lalezar-Regular.ttf exclusively - DEAD CENTER).
+    small_title: gold/white top line (e.g. surah / reciter name).
     """
     W, H = 1280, 720
     font_path = get_best_font()
+    lalezar_path = FONTS_DIR / "Lalezar-Regular.ttf"
+    font_hook_path = str(lalezar_path) if (lalezar_path.exists() and lalezar_path.stat().st_size > 10000) else font_path
+
     frame = AUDIO_CACHE_DIR / f"thumb_frame_{abs(hash(str(bg_path))) % 100000}.jpg"
     try:
         if is_image_background(str(bg_path)):
             src = Image.open(str(bg_path)).convert("RGB")
         else:
-            # Grab a frame from the MIDDLE (after the 5s intro overlay fades out)
             try:
                 _dur = get_audio_duration(str(bg_path))
-                _seek = max(10.0, _dur / 2.0)
+                _seek = max(5.0, min(15.0, _dur / 2.0))
             except Exception:
-                _seek = 12.0
+                _seek = 5.0
             _hh, _rem = divmod(int(_seek), 3600)
             _mm, _ss = divmod(_rem, 60)
             cmd = ["ffmpeg", "-y", "-ss", f"{_hh:02d}:{_mm:02d}:{_ss:02d}", "-i", str(bg_path),
                    "-vframes", "1", "-vf", "scale=1280:-1", str(frame)]
             subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
             src = Image.open(str(frame)).convert("RGB") if frame.exists() else Image.new("RGB", (W, H), (10, 12, 20))
-        # Cover-crop to 16:9
+
+        # Cover-crop to 16:9 (1280x720)
         scale = max(W / src.width, H / src.height)
         src = src.resize((int(src.width * scale) + 1, int(src.height * scale) + 1), Image.LANCZOS)
         x0 = (src.width - W) // 2
         y0 = (src.height - H) // 2
         src = src.crop((x0, y0, x0 + W, y0 + H))
-        # Darken for readability + bottom plate
+
+        # Cinematic subtle vignette (darkened edges for focus)
         dark = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         dd = ImageDraw.Draw(dark)
-        dd.rectangle([0, 0, W, H], fill=(0, 0, 0, 70))
-        dd.rounded_rectangle([60, H - 300, W - 60, H - 40], radius=26, fill=(8, 8, 14, 185),
-                             outline=(212, 175, 55, 160), width=3)
+        for i in range(H):
+            dist = abs(i - H / 2) / (H / 2)
+            alpha = int(25 + 65 * (dist ** 1.5))
+            dd.line([(0, i), (W, i)], fill=(0, 0, 0, alpha))
+
+        # 1. Top Title (Surah & Reciter) in sleek top pill banner
+        top_w, top_h, pill_y, pill_h = 0, 0, 38, 0
+        top_t = ""
+        font_top = None
+        if small_title:
+            font_top = ImageFont.truetype(font_path, 36)
+            top_t = reshape_text(small_title, font_path=font_path)
+            tbb = dd.textbbox((0, 0), top_t, font=font_top)
+            top_w = tbb[2] - tbb[0]
+            top_h = tbb[3] - tbb[1]
+            pill_w = top_w + 48
+            pill_h = top_h + 18
+            pill_x = (W - pill_w) // 2
+            pill_y = 38
+            dd.rounded_rectangle([pill_x, pill_y, pill_x + pill_w, pill_y + pill_h], radius=14,
+                                 fill=(12, 16, 24, 190), outline=(212, 175, 55, 180), width=2)
+
+        # 2. Main Hook with Lalezar (Exclusively for thumbnail hook - DEAD CENTER)
+        hook_text = (hook_text or "").strip()
+        card_rect = None
+        tw, th = 0, 0
+        font_hook = None
+        wrapped = ""
+        center_y = H // 2
+
+        if hook_text:
+            if "|" in hook_text:
+                parts = [p.strip() for p in hook_text.split("|") if p.strip()]
+                wrapped = "\n".join([reshape_text(p, font_path=font_hook_path) for p in parts[:2]])
+            elif "\n" in hook_text:
+                parts = [p.strip() for p in hook_text.split("\n") if p.strip()]
+                wrapped = "\n".join([reshape_text(p, font_path=font_hook_path) for p in parts[:2]])
+            else:
+                wrapped = wrap_and_reshape(hook_text, words_per_line=4, font_path=font_hook_path)
+                wrapped = "\n".join(wrapped.split("\n")[:2])
+
+            # Adaptive font size: 118 for short 3-4 words, scaling down smoothly if longer
+            target_font_size = 118
+            while target_font_size >= 72:
+                font_hook = ImageFont.truetype(font_hook_path, target_font_size)
+                bb = dd.multiline_textbbox((0, 0), wrapped, font=font_hook, spacing=14, align='center')
+                tw = bb[2] - bb[0]
+                th = bb[3] - bb[1]
+                if tw <= (W - 220) and th <= (H - 240):
+                    break
+                target_font_size -= 4
+
+            # Centered luxury glass card behind hook text
+            pad_x = 60
+            pad_y = 24
+            card_w = min(W - 140, tw + pad_x * 2)
+            card_h = th + pad_y * 2
+            card_x0 = (W - card_w) // 2
+            card_y0 = center_y - card_h // 2 - 8
+            card_x1 = card_x0 + card_w
+            card_y1 = card_y0 + card_h
+            card_rect = (card_x0, card_y0, card_x1, card_y1)
+
+            dd.rounded_rectangle([card_x0, card_y0, card_x1, card_y1], radius=30,
+                                 fill=(8, 12, 18, 195), outline=(212, 175, 55, 205), width=3)
+
         src = Image.alpha_composite(src.convert("RGBA"), dark).convert("RGB")
         draw = ImageDraw.Draw(src)
 
-        if small_title:
-            font_top = ImageFont.truetype(font_path, 44)
-            top_t = reshape_text(small_title, font_path=font_path)
-            bb = draw.textbbox((0, 0), top_t, font=font_top)
-            draw.text(((W - (bb[2] - bb[0])) // 2, 52), top_t, font=font_top,
-                      fill=(245, 215, 127), stroke_width=2, stroke_fill=(0, 0, 0, 230))
+        # Draw top title text
+        if small_title and font_top:
+            draw.text(((W - top_w) // 2, pill_y + (pill_h - top_h) // 2 - 2), top_t, font=font_top,
+                      fill=(250, 222, 138), stroke_width=2, stroke_fill=(0, 0, 0, 230))
 
-        hook_text = (hook_text or "").strip()
-        if hook_text:
-            font_hook = ImageFont.truetype(font_path, 84)
-            # Support explicit line break with | or newline; else wrap 4 words/line, max 3 lines
-            if "|" in hook_text:
-                parts = [p.strip() for p in hook_text.split("|") if p.strip()]
-                wrapped = "\n".join([reshape_text(p, font_path=font_path) for p in parts[:3]])
-            elif "\n" in hook_text:
-                parts = [p.strip() for p in hook_text.split("\n") if p.strip()]
-                wrapped = "\n".join([reshape_text(p, font_path=font_path) for p in parts[:3]])
-            else:
-                wrapped = wrap_and_reshape(hook_text, words_per_line=4, font_path=font_path)
-                wrapped = "\n".join(wrapped.split("\n")[:3])
-            bb = draw.multiline_textbbox((0, 0), wrapped, font=font_hook, spacing=14, align='center')
-            draw.multiline_text(((W - (bb[2] - bb[0])) // 2, H - 272), wrapped, font=font_hook,
+        # Draw centered hook text in Lalezar
+        if hook_text and font_hook and card_rect:
+            card_x0, card_y0, card_x1, card_y1 = card_rect
+            text_x = (W - tw) // 2
+            text_y = card_y0 + (card_h - th) // 2 - 6
+
+            # Drop shadow
+            draw.multiline_text((text_x + 2, text_y + 3), wrapped, font=font_hook,
+                                fill=(0, 0, 0, 230), spacing=14, align='center',
+                                stroke_width=5, stroke_fill=(0, 0, 0, 240))
+            # Main White text in Lalezar
+            draw.multiline_text((text_x, text_y), wrapped, font=font_hook,
                                 fill=(255, 255, 255), spacing=14, align='center',
-                                stroke_width=3, stroke_fill=(0, 0, 0, 245))
-        src.save(str(out_path), "JPEG", quality=90)
+                                stroke_width=3, stroke_fill=(0, 0, 0, 250))
+
+        src.save(str(out_path), "JPEG", quality=93)
     finally:
         try:
             if frame.exists():
@@ -1388,8 +1451,6 @@ def generate_thumbnail_image(bg_path, hook_text, small_title, out_path, progress
         except Exception:
             pass
     return str(out_path)
-
-
 def render_multisegment_video(
     job_title,
     segments,
@@ -1479,34 +1540,18 @@ def render_multisegment_video(
     update_p(42, f"وضع الرندر: {codec_label}")
     audio_filter = build_audio_mood_filter("none", duration)
 
-    # Build FFmpeg inputs: one per slideshow slice + overlay + audio
-    ffmpeg_inputs = []
-    for bg in bg_list:
-        if is_image_background(bg):
-            ffmpeg_inputs += ["-loop", "1", "-framerate", "30", "-t", f"{slice_dur:.2f}", "-i", bg]
-        else:
-            ffmpeg_inputs += ["-stream_loop", "-1", "-ss", "0", "-t", f"{slice_dur:.2f}", "-i", bg]
-    n_vid_inputs = len(bg_list)
-    ffmpeg_inputs += ["-loop", "1", "-framerate", "30", "-t", f"{overlay_cut}", "-i", overlay_png,
-                      "-i", str(joint_mp3)]
-
-    if n_vid_inputs == 1:
-        vbg_filter = f"[0:v]scale=w={width}:h={height}:force_original_aspect_ratio=increase,crop={width}:{height},fps=30,format=yuv420p[vbg]"
+    # Build FFmpeg inputs: single ambient video loop + recitation audio (clean, 0% overlay)
+    if is_image_background(bg_file):
+        ffmpeg_inputs = ["-loop", "1", "-framerate", "30", "-t", f"{duration:.2f}", "-i", str(bg_file)]
     else:
-        parts = []
-        for i in range(n_vid_inputs):
-            parts.append(f"[{i}:v]scale=w={width}:h={height}:force_original_aspect_ratio=increase,"
-                         f"crop={width}:{height},fps=30,format=yuv420p,settb=AVTB[v{i}]")
-        parts.append("".join(f"[v{i}]" for i in range(n_vid_inputs)) + f"concat=n={n_vid_inputs}:v=1:a=0[vbg]")
-        vbg_filter = ";".join(parts)
-    overlay_fade = (f"format=rgba,fade=t=in:st=0:d={fade_in:.1f}:alpha=1,"
-                    f"fade=t=out:st={fade_out_start:.1f}:d={fade_out_dur:.1f}:alpha=1")
-    filter_complex = (f"{vbg_filter};[{n_vid_inputs}:v]{overlay_fade}[ov];"
-                      f"[vbg][ov]overlay=0:0:eof_action=pass:format=yuv420[vout]")
+        ffmpeg_inputs = ["-stream_loop", "-1", "-ss", "0", "-t", f"{duration:.2f}", "-i", str(bg_file)]
+    ffmpeg_inputs += ["-i", str(joint_mp3)]
+
+    filter_complex = f"[0:v]scale=w={width}:h={height}:force_original_aspect_ratio=increase,crop={width}:{height},fps=30,format=yuv420p,setsar=1[vout]"
 
     ffmpeg_cmd = ["ffmpeg", "-y", *ffmpeg_inputs,
                   "-filter_complex", filter_complex,
-                  "-map", "[vout]", "-map", f"{n_vid_inputs + 1}:a",
+                  "-map", "[vout]", "-map", "1:a",
                   *video_codec_args, "-af", audio_filter,
                   "-c:a", "aac", "-b:a", "192k", "-ar", "44100",
                   "-t", f"{duration:.2f}", "-movflags", "+faststart", "-shortest",
@@ -2068,82 +2113,34 @@ def _assemble_long_video(segments, reciter, label, out_prefix="Quran",
                                        progress_cb=update_p)
     update_p(38, f"تم تجهيز {len(bg_list)} خلفيات طبيعية متتالية...")
 
-    # صور كل فصل (نصوص الآيات بالرسم العثماني)
+        # فيديو الخلفية الطبيعية الهادئة بنظام التكرار السلس (بدون أي نصوص على الفيديو)
     width, height = (1920, 1080) if aspect_ratio == "16:9" else (1080, 1920)
     chapter_pngs = []
-    for i, ch in enumerate(chapters, start=1):
-        try:
-            png = create_chapter_overlay_image(
-                width=width, height=height, chapter=ch,
-                surah_num=label.get("surah_num", 1), reciter=reciter,
-                page_no=i, total_pages=len(chapters))
-            chapter_pngs.append(png)
-        except Exception as e:
-            logger.warning(f"Chapter {i} overlay failed: {e}")
-    chapter_pngs = [p for p in chapter_pngs if p]
-    if not chapter_pngs:
-        raise RuntimeError("تعذر توليد صفحات النص القرآني")
-    update_p(44, f"تم تصميم {len(chapter_pngs)} صفحة بالرسم العثماني المُشكَّل")
 
-    # التركيب النهائي عبر FFmpeg
     if speed_mode not in ("max", "balanced"):
         speed_mode = "max"
     video_codec_args, codec_label = build_video_codec_args(speed_mode)
     update_p(46, f"وضع الرندر: {codec_label}")
 
-    cum = 0.0
-    chapter_times = []
-    for ch in chapters[:len(chapter_pngs)]:
-        chapter_times.append((cum, cum + ch["duration"]))
-        cum += ch["duration"]
-
-    ffmpeg_inputs = []
-    slice_dur = duration / len(bg_list)
-    for bg in bg_list:
-        if is_image_background(bg):
-            ffmpeg_inputs += ["-loop", "1", "-framerate", "30", "-t", f"{slice_dur:.2f}", "-i", bg]
-        else:
-            ffmpeg_inputs += ["-stream_loop", "-1", "-ss", "0", "-t", f"{slice_dur:.2f}", "-i", bg]
-    n_bg_in = len(bg_list)
-    for i, png in enumerate(chapter_pngs):
-        cd = chapter_times[i][1] - chapter_times[i][0]
-        ffmpeg_inputs += ["-loop", "1", "-framerate", "30", "-t", f"{cd:.2f}", "-i", png]
-    n_txt_in = len(chapter_pngs)
+    bg_file = bg_list[0]
+    if is_image_background(bg_file):
+        ffmpeg_inputs = ["-loop", "1", "-framerate", "30", "-t", f"{duration:.2f}", "-i", str(bg_file)]
+    else:
+        ffmpeg_inputs = ["-stream_loop", "-1", "-ss", "0", "-t", f"{duration:.2f}", "-i", str(bg_file)]
     ffmpeg_inputs += ["-i", str(joint_mp3)]
 
-    parts = []
-    for i in range(n_bg_in):
-        parts.append(f"[{i}:v]scale=w={width}:h={height}:force_original_aspect_ratio=increase,"
-                     f"crop={width}:{height},fps=30,format=yuv420p,setsar=1,settb=AVTB[b{i}]")
-    parts.append("".join(f"[b{i}]" for i in range(n_bg_in)) +
-                 f"concat=n={n_bg_in}:v=1:a=0[vbg]")
-    fade_d = 1.0
-    t0, t1 = chapter_times[0]
-    parts.append(f"[{n_bg_in}:v]format=rgba,fade=t=in:st=0:d={fade_d}:alpha=1,"
-                 f"fade=t=out:st={max(0, (t1 - t0) - fade_d):.2f}:d={fade_d}:alpha=1[ov0]")
-    parts.append(f"[vbg][ov0]overlay=0:0:enable='between(t,{t0:.2f},{t1:.2f})':format=yuv420[v0]")
-    prev = "v0"
-    for i in range(1, n_txt_in):
-        idx = n_bg_in + i
-        a, b = chapter_times[i]
-        cd = b - a
-        parts.append(f"[{idx}:v]format=rgba,fade=t=in:st=0:d={fade_d}:alpha=1,"
-                     f"fade=t=out:st={max(0, cd - fade_d):.2f}:d={fade_d}:alpha=1[ov{i}]")
-        parts.append(f"[{prev}][ov{i}]overlay=0:0:enable='between(t,{a:.2f},{b:.2f})':format=yuv420[v{i}]")
-        prev = f"v{i}"
-    parts.append(f"[{prev}]format=yuv420p[vout]")
-    filter_complex = ";".join(parts)
+    filter_complex = f"[0:v]scale=w={width}:h={height}:force_original_aspect_ratio=increase,crop={width}:{height},fps=30,format=yuv420p,setsar=1[vout]"
     audio_filter = build_audio_mood_filter("none", duration)
 
     safe_name = "".join(c for c in label.get("surah_name", "Quran")
                         if c.isalnum() or c in ('_', '-'))[:40] or "Quran"
     out_filename = f"{out_prefix}_{safe_name}_{safe_reciter}_{timestamp}.mp4"
     out_video_path = VIDEO_OUT_DIR / out_filename
-    update_p(50, f"جاري الرندر السينمائي ({duration/60:.1f} دقيقة • {len(chapter_pngs)} صفحة)...")
+    update_p(50, f"جاري الرندر السينمائي الهادئ ({duration/60:.1f} دقيقة)...")
 
     ffmpeg_cmd = ["ffmpeg", "-y", *ffmpeg_inputs,
                   "-filter_complex", filter_complex,
-                  "-map", "[vout]", "-map", f"{n_bg_in + n_txt_in}:a",
+                  "-map", "[vout]", "-map", "1:a",
                   *video_codec_args, "-af", audio_filter,
                   "-c:a", "aac", "-b:a", "192k", "-ar", "44100",
                   "-t", f"{duration:.2f}", "-movflags", "+faststart", "-shortest",
@@ -2213,13 +2210,17 @@ def _assemble_long_video(segments, reciter, label, out_prefix="Quran",
         logger.error(f"FFmpeg error: {err_content}")
         raise RuntimeError(f"خطأ أثناء معالجة الفيديو: {err_content[-300:]}")
 
-    update_p(97, "جاري توليد الصورة المصغرة...")
+    update_p(97, "جاري توليد الصورة المصغرة المهدئة بخط لاليزار...")
     thumb_path, thumb_url = None, None
     try:
+        from comfort_hooks import get_comfort_hook
+        s_num = label.get("surah_num", 1)
+        comfort_hook = label.get("hook_text") or get_comfort_hook(s_num)
         thumb_name = Path(out_filename).stem + "_thumb.jpg"
         thumb_path = str(VIDEO_OUT_DIR / thumb_name)
-        generate_thumbnail_image(bg_list[0], label.get("thumb_title", label.get("surah_name", "")),
-                                 small_title=reciter["name"], out_path=thumb_path)
+        top_lbl = f"سورة {label.get('surah_name', '')} كاملة | {reciter['name']}"
+        generate_thumbnail_image(bg_list[0], comfort_hook,
+                                 small_title=top_lbl, out_path=thumb_path)
         thumb_url = f"/outputs/video/{thumb_name}"
     except Exception as e:
         logger.warning(f"Thumbnail generation failed: {e}")

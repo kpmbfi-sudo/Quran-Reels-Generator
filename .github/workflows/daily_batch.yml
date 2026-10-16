@@ -77,6 +77,9 @@ jobs:
           if [ ! -f "fonts/Amiri-Bold.ttf" ] || [ $(wc -c < "fonts/Amiri-Bold.ttf") -lt 100000 ]; then
             curl -L -s -o fonts/Amiri-Bold.ttf https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/amiri/Amiri-Bold.ttf || true
           fi
+          if [ ! -f "fonts/Lalezar-Regular.ttf" ] || [ $(wc -c < "fonts/Lalezar-Regular.ttf") -lt 10000 ]; then
+            curl -L -s -o fonts/Lalezar-Regular.ttf https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/lalezar/Lalezar-Regular.ttf || true
+          fi
           ls -la fonts/ || true
 
       - name: 📦 Install Dependencies
