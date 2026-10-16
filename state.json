@@ -1,10 +1,21 @@
 {
-  "total_generated": 0,
+  "total_generated": 1,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
-  "last_long_surah": 0,
+  "last_long_surah": 1,
   "last_long_reciter_idx": 0,
   "batch_idx": 5,
-  "history": []
+  "history": [
+    {
+      "kind": "long_surah",
+      "surah": 1,
+      "surah_name": "الفاتحة",
+      "ayahs": 7,
+      "duration": 32.7,
+      "video_id": "8OqZfFnzMoo",
+      "date": "2026-10-16 14:16:38"
+    }
+  ],
+  "daily_cycle_idx": 1
 }
