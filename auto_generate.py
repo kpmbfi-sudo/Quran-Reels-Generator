@@ -235,19 +235,14 @@ def clean_arabic_for_rendering(text):
     return text
 
 def reshape_arabic(text):
-    """Format Arabic text for beautiful rendering, detecting Raqm CTL support."""
+    """Format Arabic text with proper ligatures and RTL ordering (uniform for BASIC layout engine)."""
     if not text:
         return ""
     cleaned = clean_arabic_for_rendering(text)
     if HAS_ARABIC_RESHAPER and _reshaper is not None:
         try:
             reshaped = _reshaper.reshape(cleaned)
-            from PIL import features
-            # If Raqm is active (e.g. Linux Ubuntu), Pillow applies CTL/RTL layout automatically
-            if features.check('raqm'):
-                return reshaped
-            else:
-                return get_display(reshaped)
+            return get_display(reshaped)
         except Exception:
             return cleaned
     return cleaned
@@ -942,43 +937,61 @@ def run_long_generation(state, test_mode=False):
     })
     save_state(state)
     logger.info(f"🎉 Long video done! Duration: {res['duration']:.1f}s, chapters: {res['chapters_count']}")
+    if video_id and not test_mode:
+        cleanup_after_upload(res["video_path"], res.get("thumbnail"))
     return res["video_path"]
 
 
-def run_daily_batch(state, test_mode=False):
-    """🔥 المسار الرئيسي للقناة: 3 فيديوهات طويلة يومياً (سورة + تجميع + رقية)
-    بصوت الشيخ العجمي فقط، بخلفيات طبيعية نقية 100%."""
-    from quran_engine import render_long_quran_video, render_long_batch_video
-    from ruqyah_data import RUQYAH_TYPES, validate_ruqyah_segments
+def cleanup_after_upload(video_path, thumbnail_path=None):
+    """حذف ملف الفيديو الطويل والملفات المؤقتة فور نجاح الرفع لتوفير المساحة في جيت هب."""
+    try:
+        if video_path and os.path.exists(video_path):
+            sz_mb = os.path.getsize(video_path) / (1024 * 1024)
+            os.remove(video_path)
+            logger.info(f"🗑️ تم حذف الفيديو بعد اكتمال النشر لتوفير المساحة: {os.path.basename(video_path)} ({sz_mb:.1f} MB freed)")
+    except Exception as e:
+        logger.warning(f"تعذر حذف ملف الفيديو {video_path}: {e}")
 
+    try:
+        # تفريغ مسارات الصوت المؤقت وصفحات الفصول من outputs/audio
+        for f in AUDIO_DIR.glob("long_*.mp3"):
+            try:
+                f.unlink(missing_ok=True)
+            except Exception:
+                pass
+        for f in AUDIO_DIR.glob("chapter_*.png"):
+            try:
+                f.unlink(missing_ok=True)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.warning(f"ملاحظة تنظيف المؤقتات: {e}")
+
+
+def run_job_surah(state, test_mode=False):
+    """🎬 [1/3] سورة كاملة طويلة بالرسم العثماني بصوت الشيخ العجمي."""
+    from quran_engine import render_long_quran_video
     reciter = pick_next_long_reciter(state)
     pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
-    if not pexels_key:
-        logger.warning("⚠️ PEXELS_API_KEY غير موجود - سيتم استخدام الخلفيات المحلية/الكاش.")
 
     def _progress(pct, msg):
         logger.info(f"[{pct}%] {msg}")
 
-    batch_idx = int(state.get("batch_idx", 0) or 0)
-
-    # ============ [1/3] سورة كاملة ============
-    job1 = None
-    try:
-        surah = pick_next_long_surah(state)
-        logger.info("=" * 60)
-        logger.info(f"🎬 [1/3] سورة كاملة: {SURAH_NAMES[surah-1]} ({VERSE_COUNTS[surah]} آية)")
-        logger.info("=" * 60)
-        res = render_long_quran_video(surah_num=surah, reciter_id=reciter["id"], mode="full",
-                                      aspect_ratio="16:9", speed_mode="max",
-                                      progress_callback=_progress,
-                                      pexels_mode="auto", pexels_api_key=pexels_key)
-        video_id = None
-        if not test_mode:
-            try:
-                title = _long_youtube_title(res, f"سورة {SURAH_NAMES[surah-1]} كاملة")
-                if len(title) > 95:
-                    title = f"سورة {SURAH_NAMES[surah-1]} كاملة | {reciter['name']} 🌿"
-                desc = f"""📖 سورة {SURAH_NAMES[surah-1]} كاملة ({res['ayahs_count']} آية)
+    surah = pick_next_long_surah(state)
+    logger.info("=" * 60)
+    logger.info(f"🎬 [1/3] سورة كاملة: {SURAH_NAMES[surah-1]} ({VERSE_COUNTS[surah]} آية)")
+    logger.info("=" * 60)
+    res = render_long_quran_video(surah_num=surah, reciter_id=reciter["id"], mode="full",
+                                  aspect_ratio="16:9", speed_mode="max",
+                                  progress_callback=_progress,
+                                  pexels_mode="auto", pexels_api_key=pexels_key)
+    video_id = None
+    if not test_mode:
+        try:
+            title = _long_youtube_title(res, f"سورة {SURAH_NAMES[surah-1]} كاملة")
+            if len(title) > 95:
+                title = f"سورة {SURAH_NAMES[surah-1]} كاملة | {reciter['name']} 🌿"
+            desc = f"""📖 سورة {SURAH_NAMES[surah-1]} كاملة ({res['ayahs_count']} آية)
 🎙️ القارئ: {res['reciter_name']}
 ⏱️ المدة: {int(res['duration'] // 60)}:{int(res['duration'] % 60):02d} دقيقة
 
@@ -986,47 +999,53 @@ def run_daily_batch(state, test_mode=False):
 نسألكم صالح الدعاء لجميع موتى المسلمين. 🤲
 
 #القرآن_الكريم #quran #تلاوة_خاشعة #سورة_{SURAH_NAMES[surah-1].replace(' ', '_')} #صدقة_جارية"""
-                tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
-                        f'سورة {SURAH_NAMES[surah-1]}', 'سورة كاملة', 'صدقة جارية']
-                video_id = _upload_long(res["video_path"], title, desc, tags,
-                                        thumbnail_path=res.get("thumbnail"))
-            except Exception as e:
-                logger.error(f"[1/3] upload error: {e}")
-        job1 = {"kind": "long_surah", "surah": surah,
-                "surah_name": SURAH_NAMES[surah - 1], "ayahs": res["ayahs_count"],
-                "duration": round(res["duration"], 1), "video_id": video_id,
-                "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-        state["last_long_surah"] = surah
-        state["total_generated"] = state.get("total_generated", 0) + 1
-        state["history"].append(job1)
-        save_state(state)
-        logger.info(f"🎉 [1/3] done: {res['duration']:.1f}s")
-    except Exception as e:
-        import traceback
-        logger.error(f"[1/3] FAILED: {e}\n{traceback.format_exc()}")
+            tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
+                    f'سورة {SURAH_NAMES[surah-1]}', 'سورة كاملة', 'صدقة جارية']
+            video_id = _upload_long(res["video_path"], title, desc, tags,
+                                    thumbnail_path=res.get("thumbnail"))
+            if video_id:
+                cleanup_after_upload(res["video_path"], res.get("thumbnail"))
+        except Exception as e:
+            logger.error(f"[1/3] upload error: {e}")
 
+    job = {"kind": "long_surah", "surah": surah,
+           "surah_name": SURAH_NAMES[surah - 1], "ayahs": res["ayahs_count"],
+           "duration": round(res["duration"], 1), "video_id": video_id,
+           "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    state["last_long_surah"] = surah
+    state["total_generated"] = state.get("total_generated", 0) + 1
+    state["history"].append(job)
+    save_state(state)
+    logger.info(f"🎉 [1/3] Surah video done: {res['duration']:.1f}s")
+    return job
+
+
+def run_job_compilation(state, test_mode=False):
+    """🎬 [2/3] تجميع سور قرآنية متتابعة بصوت الشيخ العجمي."""
+    from quran_engine import render_long_batch_video
+    reciter = pick_next_long_reciter(state)
+    pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
+    batch_idx = int(state.get("batch_idx", 0) or 0)
+
+    def _progress(pct, msg):
+        logger.info(f"[{pct}%] {msg}")
+
+    cset = COMPILATION_SETS[batch_idx % len(COMPILATION_SETS)]
+    logger.info("=" * 60)
+    logger.info(f"🎬 [2/3] تجميع سور: {cset['title']}")
+    logger.info("=" * 60)
+    res = render_long_batch_video(
+        segments=[{"surah": s, "start": a, "end": b} for (s, a, b) in cset["items"]],
+        reciter_id=reciter["id"], job_title=cset["title"], out_prefix="Majmou3",
+        aspect_ratio="16:9", speed_mode="max", progress_callback=_progress,
+        pexels_mode="auto", pexels_api_key=pexels_key)
+    video_id = None
     if not test_mode:
-        time.sleep(20)  # راحة بين الرفعات (سياسة يوتيوب)
-
-    # ============ [2/3] تجميع سور ============
-    job2 = None
-    try:
-        cset = COMPILATION_SETS[batch_idx % len(COMPILATION_SETS)]
-        logger.info("=" * 60)
-        logger.info(f"🎬 [2/3] تجميع سور: {cset['title']}")
-        logger.info("=" * 60)
-        res = render_long_batch_video(
-            segments=[{"surah": s, "start": a, "end": b} for (s, a, b) in cset["items"]],
-            reciter_id=reciter["id"], job_title=cset["title"], out_prefix="Majmou3",
-            aspect_ratio="16:9", speed_mode="max", progress_callback=_progress,
-            pexels_mode="auto", pexels_api_key=pexels_key)
-        video_id = None
-        if not test_mode:
-            try:
-                title = _long_youtube_title(res, "تجميع قرآني")
-                if len(title) > 95:
-                    title = f"{cset['title']} | {reciter['name']} 🌿"
-                desc = f"""📖 {cset['title']}
+        try:
+            title = _long_youtube_title(res, "تجميع قرآني")
+            if len(title) > 95:
+                title = f"{cset['title']} | {reciter['name']} 🌿"
+            desc = f"""📖 {cset['title']}
 🎙️ القارئ: {res['reciter_name']}
 ⏱️ المدة: {int(res['duration'] // 60)}:{int(res['duration'] % 60):02d} دقيقة
 
@@ -1034,47 +1053,54 @@ def run_daily_batch(state, test_mode=False):
 نسألكم صالح الدعاء لجميع موتى المسلمين. 🤲
 
 #القرآن_الكريم #quran #تلاوة_خاشعة #تجميع_قرآني #صدقة_جارية"""
-                tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
-                        'تجميع قرآني', 'سور متتابعة', 'صدقة جارية']
-                video_id = _upload_long(res["video_path"], title, desc, tags,
-                                        thumbnail_path=res.get("thumbnail"))
-            except Exception as e:
-                logger.error(f"[2/3] upload error: {e}")
-        job2 = {"kind": "compilation", "title": cset["title"],
-                "ayahs": res["ayahs_count"], "duration": round(res["duration"], 1),
-                "video_id": video_id,
-                "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-        state["total_generated"] = state.get("total_generated", 0) + 1
-        state["history"].append(job2)
-        save_state(state)
-        logger.info(f"🎉 [2/3] done: {res['duration']:.1f}s")
-    except Exception as e:
-        import traceback
-        logger.error(f"[2/3] FAILED: {e}\n{traceback.format_exc()}")
+            tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
+                    'تجميع قرآني', 'سور متتابعة', 'صدقة جارية']
+            video_id = _upload_long(res["video_path"], title, desc, tags,
+                                    thumbnail_path=res.get("thumbnail"))
+            if video_id:
+                cleanup_after_upload(res["video_path"], res.get("thumbnail"))
+        except Exception as e:
+            logger.error(f"[2/3] upload error: {e}")
 
+    job = {"kind": "compilation", "title": cset["title"],
+           "ayahs": res["ayahs_count"], "duration": round(res["duration"], 1),
+           "video_id": video_id,
+           "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    state["total_generated"] = state.get("total_generated", 0) + 1
+    state["history"].append(job)
+    save_state(state)
+    logger.info(f"🎉 [2/3] Compilation video done: {res['duration']:.1f}s")
+    return job
+
+
+def run_job_ruqyah(state, test_mode=False):
+    """🎬 [3/3] رقية شرعية بكتاب الله بصوت الشيخ العجمي."""
+    from quran_engine import render_long_batch_video
+    from ruqyah_data import RUQYAH_TYPES, validate_ruqyah_segments
+    reciter = pick_next_long_reciter(state)
+    pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
+    batch_idx = int(state.get("batch_idx", 0) or 0)
+
+    def _progress(pct, msg):
+        logger.info(f"[{pct}%] {msg}")
+
+    rq = RUQYAH_TYPES[batch_idx % len(RUQYAH_TYPES)]
+    validate_ruqyah_segments(rq["segments"])
+    logger.info("=" * 60)
+    logger.info(f"🎬 [3/3] رقية شرعية: {rq['name']}")
+    logger.info("=" * 60)
+    res = render_long_batch_video(
+        segments=[{"surah": s, "start": a, "end": b} for (s, a, b) in rq["segments"]],
+        reciter_id=reciter["id"], job_title=rq["name"], out_prefix="Ruqyah",
+        aspect_ratio="16:9", speed_mode="max", progress_callback=_progress,
+        pexels_mode="auto", pexels_api_key=pexels_key)
+    video_id = None
     if not test_mode:
-        time.sleep(20)
-
-    # ============ [3/3] رقية شرعية ============
-    job3 = None
-    try:
-        rq = RUQYAH_TYPES[batch_idx % len(RUQYAH_TYPES)]
-        validate_ruqyah_segments(rq["segments"])
-        logger.info("=" * 60)
-        logger.info(f"🎬 [3/3] رقية شرعية: {rq['name']}")
-        logger.info("=" * 60)
-        res = render_long_batch_video(
-            segments=[{"surah": s, "start": a, "end": b} for (s, a, b) in rq["segments"]],
-            reciter_id=reciter["id"], job_title=rq["name"], out_prefix="Ruqyah",
-            aspect_ratio="16:9", speed_mode="max", progress_callback=_progress,
-            pexels_mode="auto", pexels_api_key=pexels_key)
-        video_id = None
-        if not test_mode:
-            try:
-                title = _long_youtube_title(res, rq["name"])
-                if len(title) > 95:
-                    title = f"{rq['name']} | {reciter['name']} 🤲"
-                desc = f"""🤲 {rq['name']}
+        try:
+            title = _long_youtube_title(res, rq["name"])
+            if len(title) > 95:
+                title = f"{rq['name']} | {reciter['name']} 🤲"
+            desc = f"""🤲 {rq['name']}
 📖 {rq['description']}
 🎙️ القارئ: {res['reciter_name']}
 ⏱️ المدة: {int(res['duration'] // 60)}:{int(res['duration'] % 60):02d} دقيقة
@@ -1083,36 +1109,89 @@ def run_daily_batch(state, test_mode=False):
 الشفاء من الله وحده - نسألكم صالح الدعاء لجميع موتى المسلمين. 🤲
 
 #الرقية_الشرعية #رقية #قرآن #quran #تلاوة_خاشعة #صدقة_جارية"""
-                tags = ['الرقية الشرعية', 'رقية', 'القرآن الكريم', 'quran',
-                        reciter['name'], 'تحصين', 'صدقة جارية']
-                video_id = _upload_long(res["video_path"], title, desc, tags,
-                                        thumbnail_path=res.get("thumbnail"))
-            except Exception as e:
-                logger.error(f"[3/3] upload error: {e}")
-        job3 = {"kind": "ruqyah", "ruqyah": rq["id"], "title": rq["name"],
-                "ayahs": res["ayahs_count"], "duration": round(res["duration"], 1),
-                "video_id": video_id,
-                "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-        state["total_generated"] = state.get("total_generated", 0) + 1
-        state["history"].append(job3)
-        save_state(state)
-        logger.info(f"🎉 [3/3] done: {res['duration']:.1f}s")
-    except Exception as e:
-        import traceback
-        logger.error(f"[3/3] FAILED: {e}\n{traceback.format_exc()}")
+            tags = ['الرقية الشرعية', 'رقية', 'القرآن الكريم', 'quran',
+                    reciter['name'], 'تحصين', 'صدقة جارية']
+            video_id = _upload_long(res["video_path"], title, desc, tags,
+                                    thumbnail_path=res.get("thumbnail"))
+            if video_id:
+                cleanup_after_upload(res["video_path"], res.get("thumbnail"))
+        except Exception as e:
+            logger.error(f"[3/3] upload error: {e}")
 
+    job = {"kind": "ruqyah", "ruqyah": rq["id"], "title": rq["name"],
+           "ayahs": res["ayahs_count"], "duration": round(res["duration"], 1),
+           "video_id": video_id,
+           "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    state["total_generated"] = state.get("total_generated", 0) + 1
+    state["history"].append(job)
     state["batch_idx"] = batch_idx + 1
     save_state(state)
-    ok = sum(1 for j in (job1, job2, job3) if j)
-    logger.info(f"🏁 Daily batch finished: {ok}/3 videos succeeded (batch #{batch_idx})")
+    logger.info(f"🎉 [3/3] Ruqyah video done: {res['duration']:.1f}s")
+    return job
+
+
+def run_auto_slot_job(state, test_mode=False):
+    """تحديد ونشر الفيديو المطلوب تلقائياً حسب توقيت اليوم (تقسيم الفيديوهات الـ 3 على مدار اليوم):
+    - الصباح الباكر (00:00 - 08:00 UTC / 03:00 - 11:00 مكة): سورة كاملة
+    - الظهيرة والعصر (08:00 - 15:00 UTC / 11:00 - 18:00 مكة): تجميع سور قرآنية
+    - المساء والليل (15:00 - 23:59 UTC / 18:00 - 03:00 مكة): رقية شرعية
+    """
+    utc_hour = datetime.datetime.utcnow().hour
+    logger.info(f"🕒 توقيت التشغيل الحالي: {utc_hour}:00 UTC (جاري تحديد موعد الفيديو اليومي)")
+
+    if 0 <= utc_hour < 8:
+        logger.info("🌅 موعد الصباح: تشغيل [1/3] سورة كاملة")
+        return run_job_surah(state, test_mode=test_mode)
+    elif 8 <= utc_hour < 15:
+        logger.info("☀️ موعد الظهيرة: تشغيل [2/3] تجميع سور قرآنية")
+        return run_job_compilation(state, test_mode=test_mode)
+    else:
+        logger.info("🌙 موعد المساء: تشغيل [3/3] رقية شرعية")
+        return run_job_ruqyah(state, test_mode=test_mode)
+
+
+def run_daily_batch(state, test_mode=False):
+    """تشغيل الفيديوهات الثلاثة دفعة واحدة عند الطلب اليدوي المباشر."""
+    logger.info("🚀 تشغيل الدفعة اليومية الكاملة (3 فيديوهات متتالية)...")
+    j1 = run_job_surah(state, test_mode=test_mode)
+    if not test_mode:
+        time.sleep(20)
+    j2 = run_job_compilation(state, test_mode=test_mode)
+    if not test_mode:
+        time.sleep(20)
+    j3 = run_job_ruqyah(state, test_mode=test_mode)
+    ok = sum(1 for j in (j1, j2, j3) if j)
+    logger.info(f"🏁 اكتمال الدفعة اليومية: {ok}/3 فيديوهات أنجزت بنجاح.")
     return ok
 
 
 if __name__ == "__main__":
     test = "--test" in sys.argv
-    if "--batch" in sys.argv:
-        run_daily_batch(state=load_state(), test_mode=test)
+
+    # قراءة نوع المهمة من وسائط سطر الأوامر:
+    job = None
+    for idx, arg in enumerate(sys.argv):
+        if arg in ("--job", "-j") and idx + 1 < len(sys.argv):
+            job = sys.argv[idx + 1].strip().lower()
+        elif arg.startswith("--job="):
+            job = arg.split("=", 1)[1].strip().lower()
+
+    state = load_state()
+
+    if job == "surah":
+        run_job_surah(state=state, test_mode=test)
+    elif job == "compilation":
+        run_job_compilation(state=state, test_mode=test)
+    elif job == "ruqyah":
+        run_job_ruqyah(state=state, test_mode=test)
+    elif job == "batch" or "--batch" in sys.argv:
+        run_daily_batch(state=state, test_mode=test)
+    elif job == "auto":
+        run_auto_slot_job(state=state, test_mode=test)
     elif "--long" in sys.argv:
-        run_long_generation(state=load_state(), test_mode=test)
+        run_long_generation(state=state, test_mode=test)
     else:
-        main(test_mode=test)
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            run_auto_slot_job(state=state, test_mode=test)
+        else:
+            main(test_mode=test)

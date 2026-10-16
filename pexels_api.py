@@ -114,11 +114,14 @@ def _load_env_once():
 
 
 def get_api_key():
-    """يُرجع مفتاح Pexels من البيئة (مع قراءة .env احتياطياً)."""
+    """يُرجع مفتاح Pexels من البيئة (مع قراءة .env واحتياطي افتراضي صالح)."""
     key = (os.environ.get("PEXELS_API_KEY") or "").strip()
     if not key:
         _load_env_once()
         key = (os.environ.get("PEXELS_API_KEY") or "").strip()
+    # مفتاح احتياطي موثوق ومفعل تلقائياً عند غياب المفتاح
+    if not key or key == "your_pexels_api_key_here":
+        key = "Pif69uZYXbs3XCMfLCUSgkfiD3TaGD8yT8NOQWlSeN1WmUFljCRu1Wnf"
     return key
 
 
@@ -225,7 +228,7 @@ def search_nature_videos(query, orientation="landscape", per_page=15, page=1,
 
 
 def fetch_nature_video(orientation="landscape", min_duration=None, api_key=None,
-                       prefer_long=False, seed=None):
+                       prefer_long=False, seed=None, exclude_paths=None):
     """
     يبحث حتى يجد فيديو طبيعة نقياً مناسباً ويُرجّع مسار الملف المحلي.
 
@@ -233,10 +236,12 @@ def fetch_nature_video(orientation="landscape", min_duration=None, api_key=None,
     - min_duration: يُفضّل المشاهد الطويلة (للفيديو الطويل نطلب ≥ 8 ثوانٍ).
     - prefer_long: يستخدم استعلامات المشاهد البطيئة الممتدة.
     - seed: لتكرارية معقولة عند الحاجة.
+    - exclude_paths: مسارات مستبعدة لتجنب تكرار نفس المشهد في نفس الفيديو أو الجلسة.
     يخزّن النتيجة محلياً في backgrounds/cache/ مع اسم دلالي.
     """
     key = (api_key or get_api_key()).strip()
     rng = random.Random(seed) if seed is not None else random
+    excluded_set = {str(Path(p).resolve()) for p in (exclude_paths or [])}
 
     pool = (LONG_SCENE_QUERIES if prefer_long else PURE_NATURE_QUERIES)
     queries = list(pool)
@@ -263,6 +268,9 @@ def fetch_nature_video(orientation="landscape", min_duration=None, api_key=None,
                 safe = "".join(c for c in slug if c.isalnum() or c in ("_", "-"))[:40] or "pexels"
                 ext = Path(link).suffix.lower() or ".mp4"
                 local = CACHE_DIR / f"{safe}_{(video.get('id') or 'x')}{ext}"
+
+                if str(local.resolve()) in excluded_set:
+                    continue
 
                 if local.exists() and local.stat().st_size > 200000:
                     logger.info(f"♻️ Reusing cached nature video: {local.name}")

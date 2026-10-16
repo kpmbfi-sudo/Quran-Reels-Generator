@@ -5,13 +5,26 @@
 #   [3] رقية شرعية بكتاب الله
 # خلفيات طبيعية نقية 100% من Pexels (لا بشر ولا كائنات حية)
 
-name: 🔥 Daily Quran Batch (3 Long Videos · Ajamy)
+name: 🔥 Daily Quran Scheduler (3 Videos Daily · Sheikh Ajamy)
 
 on:
   schedule:
-    - cron: '0 9 * * *'   # يومياً 9:00 UTC (12:00 ظهراً مكة/القاهرة)
+    - cron: '0 3 * * *'   # 06:00 ص مكة/القاهرة (الفيديو 1: سورة كاملة)
+    - cron: '0 10 * * *'  # 01:00 م مكة/القاهرة (الفيديو 2: تجميع سور)
+    - cron: '0 17 * * *'  # 08:00 م مكة/القاهرة (الفيديو 3: رقية شرعية)
   workflow_dispatch:
     inputs:
+      job:
+        description: 'Video to generate: auto (by time), surah, compilation, ruqyah, or batch'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - surah
+          - compilation
+          - ruqyah
+          - batch
       test_mode:
         description: 'Run in test mode (no YouTube upload)'
         required: false
@@ -27,7 +40,7 @@ permissions:
   issues: write
 
 env:
-  PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+  PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY || 'Pif69uZYXbs3XCMfLCUSgkfiD3TaGD8yT8NOQWlSeN1WmUFljCRu1Wnf' }}
   LONG_YOUTUBE_CLIENT_ID: ${{ secrets.LONG_YOUTUBE_CLIENT_ID || secrets.YOUTUBE_CLIENT_ID }}
   LONG_YOUTUBE_CLIENT_SECRET: ${{ secrets.LONG_YOUTUBE_CLIENT_SECRET || secrets.YOUTUBE_CLIENT_SECRET }}
   LONG_YOUTUBE_REFRESH_TOKEN: ${{ secrets.LONG_YOUTUBE_REFRESH_TOKEN || secrets.YOUTUBE_REFRESH_TOKEN }}
@@ -38,7 +51,7 @@ env:
 jobs:
   generate-daily-batch:
     runs-on: ubuntu-latest
-    timeout-minutes: 200
+    timeout-minutes: 120
 
     steps:
       - name: 📥 Checkout Repository
@@ -75,37 +88,30 @@ jobs:
         run: |
           mkdir -p outputs/audio outputs/video backgrounds/cache
 
-      - name: 🎬 Generate Daily Batch (3 Long Videos · Sheikh Ajamy)
+      - name: 🎬 Generate & Publish Quran Video (Sheikh Ajamy)
         run: |
           echo "=== Python ===" && python --version
           echo "=== FFmpeg ===" && ffmpeg -version | head -1
           echo "=== Engine modules check ==="
           python -c "import quran_engine, quran_data, pexels_api, ruqyah_data; print('✅ unified engine OK')"
-          echo "=== Starting daily batch (surah + compilation + ruqyah) ==="
+          
+          JOB_ARG="${{ github.event.inputs.job || 'auto' }}"
+          TEST_ARG=""
           if [ "${{ github.event.inputs.test_mode }}" == "true" ]; then
-            python auto_generate.py --batch --test 2>&1 || true
-          else
-            python auto_generate.py --batch 2>&1 || true
+            TEST_ARG="--test"
           fi
-          echo "=== Output videos ==="
-          find outputs/video -name "*.mp4" -type f -printf "%s\t%p\n" 2>/dev/null | sort -rn | head -10 || echo "No videos"
+          
+          echo "=== Running Quran Video Job: $JOB_ARG ==="
+          python auto_generate.py --job "$JOB_ARG" $TEST_ARG 2>&1 || true
 
       - name: 💾 Save State
         run: |
           git config user.name "Quran Reels Bot"
           git config user.email "quran-reels-bot@users.noreply.github.com"
           git add state.json
-          git diff --cached --quiet || git commit -m "🔥 Daily batch state: $(date '+%Y-%m-%d %H:%M')"
+          git diff --cached --quiet || git commit -m "🔥 Video state updated: $(date '+%Y-%m-%d %H:%M')"
           git pull --rebase origin main || true
           git push || echo "⚠️ Push failed - state will be updated next run"
-
-      - name: 📤 Upload Videos Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: daily-batch-videos-${{ github.run_number }}
-          path: outputs/video/*.mp4
-          retention-days: 3
 
       - name: 📋 Upload Log
         if: always()

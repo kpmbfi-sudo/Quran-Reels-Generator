@@ -1859,7 +1859,7 @@ def create_chapter_overlay_image(width, height, chapter, surah_num, reciter,
     for a in ayahs:
         num = to_arabic_digits(a["ayah"])
         body = " ".join(a["text"].split())
-        segments.append(f"{body} ۝{num}")
+        segments.append(f"{body} ﴿{num}﴾")
     full = " ".join(segments)
 
     top_y = int(height * 0.155)
@@ -1978,31 +1978,35 @@ def resolve_long_backgrounds(n, aspect_ratio, bg_video_filename=None,
             for i in range(n):
                 if progress_cb:
                     progress_cb(34, f"جاري جلب خلفية طبيعية نقية من Pexels ({i+1}/{n})...")
+                rnd_seed = random.randint(1, 1000000)
                 p = fetch_nature_video(orientation, min_duration=6,
-                                       api_key=key, prefer_long=True, seed=i + 1)
-                if p:
+                                       api_key=key, prefer_long=True, seed=rnd_seed,
+                                       exclude_paths=paths)
+                if p and p not in paths:
                     paths.append(p)
             if paths:
                 try:
-                    for b in get_local_backgrounds():
+                    local_cand = [b["path"] for b in get_local_backgrounds() if b.get("path")]
+                    random.shuffle(local_cand)
+                    for bp in local_cand:
                         if len(paths) >= n:
                             break
-                        paths.append(b["path"])
+                        if bp not in paths:
+                            paths.append(bp)
                 except Exception:
                     pass
                 while len(paths) < n:
-                    paths.append(paths[0])
+                    paths.append(paths[len(paths) % len(paths)])
                 return paths[:n]
         except Exception as e:
             logger.warning(f"Pexels unavailable ({str(e)[:140]}) - using local backgrounds.")
 
-    # الاحتياطي المحلي (مضمون دائماً)
+    # الاحتياطي المحلي (مضمون دائماً، يشمل جميع الخلفيات بجودة HD >= 700px)
     try:
         bgs = get_local_backgrounds()
     except Exception:
         bgs = []
-    # فلتر الجودة: استبعد أي خلفية بأبعاد أقل من 960px (ستكون ضبابية على 1080p)
-    MIN_DIM = 960
+    MIN_DIM = 700
     good_bgs = []
     for b in bgs:
         try:
@@ -2015,11 +2019,10 @@ def resolve_long_backgrounds(n, aspect_ratio, bg_video_filename=None,
         bgs = good_bgs
     if not bgs:
         raise RuntimeError(
-            "لا توجد خلفيات متاحة! أضف مفتاح Pexels (PEXELS_API_KEY) أو ضع فيديو/صورة طبيعية (≥960px) في مجلد backgrounds."
+            "لا توجد خلفيات متاحة! أضف مفتاح Pexels (PEXELS_API_KEY) أو ضع فيديو/صورة طبيعية في مجلد backgrounds."
         )
     pool = [b["path"] for b in bgs]
-    rng = random.Random(2024)
-    rng.shuffle(pool)
+    random.shuffle(pool)
     paths = []
     i = 0
     while len(paths) < n:
