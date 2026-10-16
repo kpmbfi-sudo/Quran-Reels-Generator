@@ -2145,7 +2145,7 @@ def _assemble_long_video(segments, reciter, label, out_prefix="Quran",
                   "-c:a", "aac", "-b:a", "192k", "-ar", "44100",
                   "-t", f"{duration:.2f}", "-movflags", "+faststart", "-shortest",
                   str(out_video_path)]
-    logger.info(f"Running FFmpeg (unified long): inputs={n_bg_in + n_txt_in + 1}")
+    logger.info(f"Running FFmpeg (unified long): inputs={len(ffmpeg_inputs)}")
     ffmpeg_log_file = AUDIO_CACHE_DIR / "ffmpeg_render.log"
 
     def run_ffmpeg(cmd):
