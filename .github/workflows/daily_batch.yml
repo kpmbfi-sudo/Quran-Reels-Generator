@@ -1,21 +1,19 @@
-# 🔥 Daily Quran Batch - 3 Long Videos | صدقة جارية مدى الحياة
-# ينشئ يومياً 3 فيديوهات طويلة بصوت الشيخ أحمد بن علي العجمي:
-#   [1] سورة كاملة بالنص العثماني المتزامن
-#   [2] تجميع سور قرآنية
-#   [3] رقية شرعية بكتاب الله
-# خلفيات طبيعية نقية 100% من Pexels (لا بشر ولا كائنات حية)
+# 🌟 Daily Quran Video (1 Long Video Daily at 5:00 PM Egypt) | صدقة جارية مدى الحياة
+# ينشئ يومياً فيديو طويل واحد بصوت الشيخ أحمد بن علي العجمي:
+# بالتناوب الذكي: [سورة كاملة مطولة] -> [تجميع سور قرآنية] -> [رقية شرعية]
+# خلفيات طبيعية هادئة نقية 100% وبدون أي نصوص على الفيديو
+# صور مصغرة بهوك نفسي جذاب بخط Lalezar الحصري في المنتصف
 
-name: 🔥 Daily Quran Scheduler (3 Videos Daily · Sheikh Ajamy)
+name: 🌟 Daily Quran Scheduler (1 Video Daily · 5:00 PM Egypt)
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # 06:00 ص مكة/القاهرة (الفيديو 1: سورة كاملة)
-    - cron: '0 10 * * *'  # 01:00 م مكة/القاهرة (الفيديو 2: تجميع سور)
-    - cron: '0 17 * * *'  # 08:00 م مكة/القاهرة (الفيديو 3: رقية شرعية)
+    # 05:00 م بتوقيت مصر/القاهرة (14:00 UTC) - فيديو يومي مطول واحد
+    - cron: '0 14 * * *'
   workflow_dispatch:
     inputs:
       job:
-        description: 'Video to generate: auto (by time), surah, compilation, ruqyah, or batch'
+        description: 'Video to generate: auto (daily rotation), surah, compilation, or ruqyah'
         required: false
         default: 'auto'
         type: choice

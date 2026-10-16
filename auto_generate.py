@@ -1131,23 +1131,27 @@ def run_job_ruqyah(state, test_mode=False):
 
 
 def run_auto_slot_job(state, test_mode=False):
-    """تحديد ونشر الفيديو المطلوب تلقائياً حسب توقيت اليوم (تقسيم الفيديوهات الـ 3 على مدار اليوم):
-    - الصباح الباكر (00:00 - 08:00 UTC / 03:00 - 11:00 مكة): سورة كاملة
-    - الظهيرة والعصر (08:00 - 15:00 UTC / 11:00 - 18:00 مكة): تجميع سور قرآنية
-    - المساء والليل (15:00 - 23:59 UTC / 18:00 - 03:00 مكة): رقية شرعية
-    """
-    utc_hour = datetime.datetime.utcnow().hour
-    logger.info(f"🕒 توقيت التشغيل الحالي: {utc_hour}:00 UTC (جاري تحديد موعد الفيديو اليومي)")
+    """تحديد ونشر فيديو مطول يومي واحد الساعة 5 مساءً بتوقيت مصر، بالتناوب التلقائي الذكي:
+    - اليوم الأول: سورة كاملة مطولة
+    - اليوم الثاني: تجميع سور قرآنية متتابعة
+    - اليوم الثالث: رقية شرعية بكتاب الله
+    دوران ذكي ومستمر لا ينتهي مدى الحياة."""
+    cycle = int(state.get("daily_cycle_idx", state.get("total_generated", 0)) or 0)
+    mode_idx = cycle % 3
 
-    if 0 <= utc_hour < 8:
-        logger.info("🌅 موعد الصباح: تشغيل [1/3] سورة كاملة")
-        return run_job_surah(state, test_mode=test_mode)
-    elif 8 <= utc_hour < 15:
-        logger.info("☀️ موعد الظهيرة: تشغيل [2/3] تجميع سور قرآنية")
-        return run_job_compilation(state, test_mode=test_mode)
+    if mode_idx == 0:
+        logger.info(f"🎬 [الدورة اليومية #{cycle+1}] موعد اليوم (05:00 م): سورة كاملة مطولة")
+        job = run_job_surah(state, test_mode=test_mode)
+    elif mode_idx == 1:
+        logger.info(f"🎬 [الدورة اليومية #{cycle+1}] موعد اليوم (05:00 م): تجميع سور قرآنية")
+        job = run_job_compilation(state, test_mode=test_mode)
     else:
-        logger.info("🌙 موعد المساء: تشغيل [3/3] رقية شرعية")
-        return run_job_ruqyah(state, test_mode=test_mode)
+        logger.info(f"🎬 [الدورة اليومية #{cycle+1}] موعد اليوم (05:00 م): رقية شرعية بكتاب الله")
+        job = run_job_ruqyah(state, test_mode=test_mode)
+
+    state["daily_cycle_idx"] = cycle + 1
+    save_state(state)
+    return job
 
 
 def run_daily_batch(state, test_mode=False):
