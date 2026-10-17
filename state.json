@@ -1,11 +1,11 @@
 {
-  "total_generated": 2,
+  "total_generated": 3,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
   "last_long_surah": 1,
   "last_long_reciter_idx": 0,
-  "batch_idx": 5,
+  "batch_idx": 6,
   "history": [
     {
       "kind": "long_surah",
@@ -23,7 +23,16 @@
       "duration": 1252.3,
       "video_id": "2IGiap3EUHM",
       "date": "2026-10-16 17:57:12"
+    },
+    {
+      "kind": "ruqyah",
+      "ruqyah": "rizq",
+      "title": "رقية الرزق وتيسير الحال",
+      "ayahs": 51,
+      "duration": 465.4,
+      "video_id": "92lK6RNbbvk",
+      "date": "2026-10-17 16:54:24"
     }
   ],
-  "daily_cycle_idx": 2
+  "daily_cycle_idx": 3
 }
