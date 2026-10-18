@@ -1,9 +1,9 @@
 {
-  "total_generated": 3,
+  "total_generated": 4,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
-  "last_long_surah": 1,
+  "last_long_surah": 8,
   "last_long_reciter_idx": 0,
   "batch_idx": 6,
   "history": [
@@ -32,7 +32,16 @@
       "duration": 465.4,
       "video_id": "92lK6RNbbvk",
       "date": "2026-10-17 16:54:24"
+    },
+    {
+      "kind": "long_surah",
+      "surah": 8,
+      "surah_name": "الأنفال",
+      "ayahs": 75,
+      "duration": 1474.0,
+      "video_id": "tZLlwLvWmV4",
+      "date": "2026-10-18 17:12:59"
     }
   ],
-  "daily_cycle_idx": 3
+  "daily_cycle_idx": 4
 }
