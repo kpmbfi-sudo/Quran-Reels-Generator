@@ -191,11 +191,15 @@ def reshape_text(text, font_path=None):
                     if ord(c) in cmap:
                         fixed.append(c)
                     else:
-                        nfkd = unicodedata.normalize('NFKD', c)
-                        if all(ord(ch) in cmap for ch in nfkd):
-                            fixed.append(nfkd)
+                        nfkc = unicodedata.normalize('NFKC', c)
+                        if all(ord(ch) in cmap for ch in nfkc):
+                            fixed.append(nfkc)
                         else:
-                            fixed.append(c)
+                            nfkd = unicodedata.normalize('NFKD', c)
+                            if all(ord(ch) in cmap for ch in nfkd):
+                                fixed.append(nfkd)
+                            else:
+                                fixed.append(c)
                 return "".join(fixed)
         return displayed
     except Exception:
@@ -243,6 +247,55 @@ def pick_background_smart(bg_video_filename=None):
         chosen = random.choice(all_bgs)
         return chosen['path']
     raise RuntimeError("لا توجد خلفيات في مجلد backgrounds! ضع فيديو mp4 أو صورة jpg/png واحدة على الأقل.")
+
+def pick_next_non_repeating_background(bg_video_filename=None):
+    """
+    اختيار خلفية بنظام الدوران الدائري المحكم بدون أي تكرار نهائياً:
+    يستنفد كامل مكتبة الخلفيات (61 خلفية فريدة) واحدة تلو الأخرى،
+    ولا يكرر أي خلفية إلا بعد انتهاء جميع الخلفيات بالكامل، ثم يعيد الدورة من البداية.
+    يحفظ قائمة الخلفيات المستخدمة في state.json لضمان الاستمرارية عبر الجلسات والرفع السحابي.
+    """
+    if bg_video_filename:
+        return pick_background_smart(bg_video_filename)
+
+    state_file = ENGINE_DIR / "state.json"
+    state_data = {}
+    if state_file.exists():
+        try:
+            with open(state_file, 'r', encoding='utf-8') as f:
+                state_data = json.load(f)
+        except Exception:
+            pass
+
+    used_bgs = state_data.get("used_backgrounds", [])
+
+    all_bgs = get_local_backgrounds()
+    valid_bgs = [b for b in all_bgs if Path(b["path"]).exists()]
+    if not valid_bgs:
+        raise RuntimeError("لا توجد خلفيات في مجلد backgrounds! ضع فيديوهات أو صوراً في مجلد backgrounds.")
+
+    # ترتيب ثابت وأبجدي لضمان تعاقب منتظم ومحدد
+    valid_bgs.sort(key=lambda b: b["filename"])
+
+    unused_bgs = [b for b in valid_bgs if b["filename"] not in used_bgs]
+
+    if not unused_bgs:
+        logger.info(f"🔄 اكتملت دورة جميع الخلفيات ({len(valid_bgs)} خلفية فريدة)! جاري بدء دورة جديدة من البداية...")
+        used_bgs = []
+        unused_bgs = list(valid_bgs)
+
+    picked = unused_bgs[0]
+    used_bgs.append(picked["filename"])
+
+    state_data["used_backgrounds"] = used_bgs
+    try:
+        with open(state_file, 'w', encoding='utf-8') as f:
+            json.dump(state_data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.warning(f"Could not save used_backgrounds to state.json: {e}")
+
+    logger.info(f"🌿 Selected non-repeating background ({len(used_bgs)}/{len(valid_bgs)}): {picked['filename']}")
+    return picked["path"]
 
 def analyze_background_mood(bg_path):
     """Smart mood matching: analyzes first frame brightness/contrast and picks vintage effect.
@@ -1359,22 +1412,11 @@ def generate_thumbnail_image(bg_path, hook_text, small_title, out_path, progress
             alpha = int(25 + 65 * (dist ** 1.5))
             dd.line([(0, i), (W, i)], fill=(0, 0, 0, alpha))
 
-        # 1. Top Title (Surah & Reciter) in sleek top pill banner
+        # 1. Top Title (Surah & Reciter) removed completely as requested:
+        # The thumbnail will ONLY display the dead-center comfort hook with no top text.
         top_w, top_h, pill_y, pill_h = 0, 0, 38, 0
         top_t = ""
         font_top = None
-        if small_title:
-            font_top = ImageFont.truetype(font_path, 36)
-            top_t = reshape_text(small_title, font_path=font_path)
-            tbb = dd.textbbox((0, 0), top_t, font=font_top)
-            top_w = tbb[2] - tbb[0]
-            top_h = tbb[3] - tbb[1]
-            pill_w = top_w + 48
-            pill_h = top_h + 18
-            pill_x = (W - pill_w) // 2
-            pill_y = 38
-            dd.rounded_rectangle([pill_x, pill_y, pill_x + pill_w, pill_y + pill_h], radius=14,
-                                 fill=(12, 16, 24, 190), outline=(212, 175, 55, 180), width=2)
 
         # 2. Main Hook with Lalezar (Exclusively for thumbnail hook - DEAD CENTER)
         hook_text = (hook_text or "").strip()
@@ -1423,10 +1465,7 @@ def generate_thumbnail_image(bg_path, hook_text, small_title, out_path, progress
         src = Image.alpha_composite(src.convert("RGBA"), dark).convert("RGB")
         draw = ImageDraw.Draw(src)
 
-        # Draw top title text
-        if small_title and font_top:
-            draw.text(((W - top_w) // 2, pill_y + (pill_h - top_h) // 2 - 2), top_t, font=font_top,
-                      fill=(250, 222, 138), stroke_width=2, stroke_fill=(0, 0, 0, 230))
+        # Top title drawing skipped entirely: only the centered Lalezar hook is displayed
 
         # Draw centered hook text in Lalezar
         if hook_text and font_hook and card_rect:
@@ -1541,6 +1580,7 @@ def render_multisegment_video(
     audio_filter = build_audio_mood_filter("none", duration)
 
     # Build FFmpeg inputs: single ambient video loop + recitation audio (clean, 0% overlay)
+    bg_file = bg_list[0] if bg_list else pick_background_smart(None)
     if is_image_background(bg_file):
         ffmpeg_inputs = ["-loop", "1", "-framerate", "30", "-t", f"{duration:.2f}", "-i", str(bg_file)]
     else:
@@ -1998,82 +2038,17 @@ def resolve_long_backgrounds(n, aspect_ratio, bg_video_filename=None,
     - الوضع التلقائي: يتطلب مفتاح Pexels صالحاً (غير placeholder).
     - الاحتياطي: الخلفيات المحلية في backgrounds/ (دائماً يعمل، بدون مشاكل).
     """
-    if n < 1:
-        n = 1
-    if bg_video_filename:
-        try:
-            one = pick_background_smart(bg_video_filename)
-            return [one] * n
-        except Exception:
-            pass
-
-    key = (pexels_api_key or "").strip()
-    if not key:
-        try:
-            from pexels_api import get_api_key
-            key = get_api_key()
-        except Exception:
-            key = ""
-
-    if pexels_mode == "auto" and key and key != "your_pexels_api_key_here":
-        try:
-            from pexels_api import fetch_nature_video
-            orientation = "landscape" if aspect_ratio == "16:9" else "portrait"
-            paths = []
-            for i in range(n):
-                if progress_cb:
-                    progress_cb(34, f"جاري جلب خلفية طبيعية نقية من Pexels ({i+1}/{n})...")
-                rnd_seed = random.randint(1, 1000000)
-                p = fetch_nature_video(orientation, min_duration=6,
-                                       api_key=key, prefer_long=True, seed=rnd_seed,
-                                       exclude_paths=paths)
-                if p and p not in paths:
-                    paths.append(p)
-            if paths:
-                try:
-                    local_cand = [b["path"] for b in get_local_backgrounds() if b.get("path")]
-                    random.shuffle(local_cand)
-                    for bp in local_cand:
-                        if len(paths) >= n:
-                            break
-                        if bp not in paths:
-                            paths.append(bp)
-                except Exception:
-                    pass
-                while len(paths) < n:
-                    paths.append(paths[len(paths) % len(paths)])
-                return paths[:n]
-        except Exception as e:
-            logger.warning(f"Pexels unavailable ({str(e)[:140]}) - using local backgrounds.")
-
-    # الاحتياطي المحلي (مضمون دائماً، يشمل جميع الخلفيات بجودة HD >= 700px)
+    # نظام الخلفيات المتعاقبة بدون تكرار إطلاقاً حتى نفاد المكتبة بالكامل
     try:
-        bgs = get_local_backgrounds()
-    except Exception:
-        bgs = []
-    MIN_DIM = 700
-    good_bgs = []
-    for b in bgs:
-        try:
-            dim = _bg_dimensions(b["path"])
-            if dim and min(dim) >= MIN_DIM:
-                good_bgs.append(b)
-        except Exception:
-            pass
-    if good_bgs:
-        bgs = good_bgs
-    if not bgs:
-        raise RuntimeError(
-            "لا توجد خلفيات متاحة! أضف مفتاح Pexels (PEXELS_API_KEY) أو ضع فيديو/صورة طبيعية في مجلد backgrounds."
-        )
-    pool = [b["path"] for b in bgs]
-    random.shuffle(pool)
-    paths = []
-    i = 0
-    while len(paths) < n:
-        paths.append(pool[i % len(pool)])
-        i += 1
-    return paths[:n]
+        picked_path = pick_next_non_repeating_background(bg_video_filename=bg_video_filename)
+        return [picked_path] * n
+    except Exception as e:
+        logger.warning(f"pick_next_non_repeating_background failed: {e}")
+
+    pool = [b["path"] for b in get_local_backgrounds() if Path(b["path"]).exists()]
+    if not pool:
+        raise RuntimeError("لا توجد خلفيات متاحة في مجلد backgrounds!")
+    return [pool[0]] * n
 
 
 def _assemble_long_video(segments, reciter, label, out_prefix="Quran",
@@ -2213,14 +2188,21 @@ def _assemble_long_video(segments, reciter, label, out_prefix="Quran",
     update_p(97, "جاري توليد الصورة المصغرة المهدئة بخط لاليزار...")
     thumb_path, thumb_url = None, None
     try:
-        from comfort_hooks import get_comfort_hook
-        s_num = label.get("surah_num", 1)
-        comfort_hook = label.get("hook_text") or get_comfort_hook(s_num)
+        from comfort_hooks import get_comfort_hook, RUQYAH_COMFORT_HOOKS
+        if out_prefix == "Ruqyah":
+            ruqyah_id = label.get("ruqyah_id") or "complete"
+            comfort_hook = label.get("hook_text") or RUQYAH_COMFORT_HOOKS.get(ruqyah_id, "سكينة وشفاء للقلب والروح")
+        elif out_prefix == "Majmou3":
+            comfort_hook = label.get("hook_text") or "أرح سمعك وقلبك بالقرآن"
+        else:
+            s_num = label.get("surah_num", 1)
+            comfort_hook = label.get("hook_text") or get_comfort_hook("surah", surah_num=s_num)
+
         thumb_name = Path(out_filename).stem + "_thumb.jpg"
         thumb_path = str(VIDEO_OUT_DIR / thumb_name)
-        top_lbl = f"سورة {label.get('surah_name', '')} كاملة | {reciter['name']}"
+        # الصورة المصغرة تحتوي حصرياً على جملة الهوك في المنتصف فقط (بدون أي نصوص علوية)
         generate_thumbnail_image(bg_list[0], comfort_hook,
-                                 small_title=top_lbl, out_path=thumb_path)
+                                 small_title=None, out_path=thumb_path)
         thumb_url = f"/outputs/video/{thumb_name}"
     except Exception as e:
         logger.warning(f"Thumbnail generation failed: {e}")
@@ -2253,7 +2235,8 @@ def _assemble_long_video(segments, reciter, label, out_prefix="Quran",
 
 def render_long_batch_video(segments, reciter_id, job_title="", out_prefix="Majmou3",
                             bg_video_filename=None, aspect_ratio="16:9", speed_mode="max",
-                            progress_callback=None, pexels_mode="auto", pexels_api_key=None):
+                            progress_callback=None, pexels_mode="auto", pexels_api_key=None,
+                            ruqyah_id=None, hook_text=None):
     """المحرك الموحّد لأي فيديو طويل متعدد المصادر: تجميع سور أو رقية شرعية.
 
     segments: [{"surah": int, "start": int, "end": int}, ...]  (مدى آيات لكل عنصر)
@@ -2297,6 +2280,8 @@ def render_long_batch_video(segments, reciter_id, job_title="", out_prefix="Majm
         "surah_name": job_title or (" + ".join(surah_labels[:3]) + ("..." if len(surah_labels) > 3 else "")),
         "range_label": " + ".join(surah_labels[:6]) + ("..." if len(surah_labels) > 6 else ""),
         "thumb_title": job_title or " + ".join(surah_labels[:3]),
+        "ruqyah_id": ruqyah_id,
+        "hook_text": hook_text,
     }
     update_p(24, f"تم تجهيز {len(all_ayahs)} آية - المجموع {sum(x['duration'] for x in all_ayahs)/60:.1f} دقيقة")
     return _assemble_long_video(
