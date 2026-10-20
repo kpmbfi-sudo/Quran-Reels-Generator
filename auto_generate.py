@@ -851,7 +851,7 @@ def pick_next_long_reciter(state):
 
 
 def _long_youtube_title(res, kind_label):
-    return f"{kind_label} | {res.get('surah_name', 'تلاوة قرآنية')} | {res.get('reciter_name', 'الشيخ أحمد بن علي العجمي')} 🌿"
+    return f"{kind_label} | {res.get('surah_name', 'تلاوة قرآنية')} | أحمد العجمي 🌿"
 
 
 def _upload_long(video_path, title, description, tags, thumbnail_path=None):
@@ -867,6 +867,7 @@ def _upload_long(video_path, title, description, tags, thumbnail_path=None):
 def run_long_generation(state, test_mode=False):
     """يولّد سورة كاملة طويلة بالمحرك الموحّد ويرفعها لليوتيوب."""
     from quran_engine import render_long_quran_video
+    from seo_engine import generate_surah_seo
 
     surah = pick_next_long_surah(state)
     reciter = pick_next_long_reciter(state)
@@ -876,7 +877,7 @@ def run_long_generation(state, test_mode=False):
     logger.info("🎬 LONG-VIDEO ENGINE (المحرك الموحّد) - سورة كاملة")
     logger.info("=" * 60)
     logger.info(f"🎯 الهدف: سورة {surah_name} كاملة ({VERSE_COUNTS[surah]} آية)")
-    logger.info(f"🎙️ القارئ: {reciter['name']}")
+    logger.info("🎙️ القارئ: أحمد العجمي")
 
     pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
     if not pexels_key:
@@ -899,23 +900,10 @@ def run_long_generation(state, test_mode=False):
     video_id = None
     if not test_mode:
         try:
-            from youtube_uploader import YouTubeUploader
-            uploader = YouTubeUploader(kind="long")
-            title = f"سورة {surah_name} كاملة | {reciter['name']} 🌿 تلاوة خاشعة بالرسم العثماني"
-            if len(title) > 95:
-                title = f"سورة {surah_name} كاملة | {reciter['name']} 🌿"
-            description = f"""📖 سورة {surah_name} كاملة ({res['ayahs_count']} آية)
-🎙️ القارئ: {res['reciter_name']}
-⏱️ المدة: {int(res['duration'] // 60)}:{int(res['duration'] % 60):02d} دقيقة
-
-تلاوة خاشعة لكلام الله بالرسم العثماني المُشكَّل، صدقة جارية لوجه الله تعالى.
-نسألكم صالح الدعاء بالمغفرة والرحمة لجميع موتى المسلمين. 🤲
-
-قال رسول الله ﷺ: «خيركم من تعلم القرآن وعلمه»
-
-#القرآن_الكريم #quran #تلاوة_خاشعة #سورة_{surah_name.replace(' ', '_')} #صدقة_جارية"""
-            tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
-                    f'سورة {surah_name}', 'سورة كاملة', 'صدقة جارية', 'خاشعة']
+            seo = generate_surah_seo(surah, res["ayahs_count"], res["duration"])
+            title = seo["title"]
+            description = seo["description"]
+            tags = seo["tags"]
             video_id = _upload_long(res["video_path"], title, description, tags,
                                     thumbnail_path=res.get("thumbnail"))
         except Exception as e:
@@ -997,19 +985,11 @@ def run_job_surah(state, test_mode=False):
     video_id = None
     if not test_mode:
         try:
-            title = f"سورة {surah_clean} كاملة | {reciter['name']} 🌿 تلاوة خاشعة بالرسم العثماني"
-            if len(title) > 95:
-                title = f"سورة {surah_clean} كاملة | {reciter['name']} 🌿"
-            desc = f"""📖 سورة {surah_clean} كاملة ({res['ayahs_count']} آية)
-🎙️ القارئ: {res['reciter_name']}
-⏱️ المدة: {int(res['duration'] // 60)}:{int(res['duration'] % 60):02d} دقيقة
-
-تلاوة خاشعة لكلام الله بالرسم العثماني المُشكَّل - صدقة جارية لوجه الله.
-نسألكم صالح الدعاء لجميع موتى المسلمين. 🤲
-
-#القرآن_الكريم #quran #تلاوة_خاشعة #سورة_{surah_clean.replace(' ', '_')} #صدقة_جارية"""
-            tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
-                    f'سورة {surah_clean}', 'سورة كاملة', 'صدقة جارية']
+            from seo_engine import generate_surah_seo
+            seo = generate_surah_seo(surah, res["ayahs_count"], res["duration"])
+            title = seo["title"]
+            desc = seo["description"]
+            tags = seo["tags"]
             video_id = _upload_long(res["video_path"], title, desc, tags,
                                     thumbnail_path=res.get("thumbnail"))
             if video_id:
@@ -1059,19 +1039,13 @@ def run_job_compilation(state, test_mode=False):
     video_id = None
     if not test_mode:
         try:
-            title = f"{comp_display} | {reciter['name']} 🌿 تلاوة خاشعة"
-            if len(title) > 95:
-                title = f"{comp_display} | {reciter['name']} 🌿"
-            desc = f"""📖 {comp_display}
-🎙️ القارئ: {res['reciter_name']}
-⏱️ المدة: {int(res['duration'] // 60)}:{int(res['duration'] % 60):02d} دقيقة
-
-تلاوة خاشعة لكلام الله بالرسم العثماني المُشكَّل - صدقة جارية لوجه الله.
-نسألكم صالح الدعاء لجميع موتى المسلمين. 🤲
-
-#القرآن_الكريم #quran #تلاوة_خاشعة #تجميع_قرآني #صدقة_جارية"""
-            tags = ['القرآن الكريم', 'quran', 'تلاوة خاشعة', reciter['name'],
-                    'تجميع قرآني', 'سور متتابعة', 'صدقة جارية']
+            from seo_engine import generate_compilation_seo
+            seo = generate_compilation_seo(comp_title=comp_display,
+                                           duration_seconds=res["duration"],
+                                           ayahs_count=res["ayahs_count"])
+            title = seo["title"]
+            desc = seo["description"]
+            tags = seo["tags"]
             video_id = _upload_long(res["video_path"], title, desc, tags,
                                     thumbnail_path=res.get("thumbnail"))
             if video_id:
@@ -1120,21 +1094,15 @@ def run_job_ruqyah(state, test_mode=False):
     video_id = None
     if not test_mode:
         try:
-            # خالي تماماً من كلمة "سورة"
-            title = f"{rq_name} | {reciter['name']} 🤲 تحصين وشفاء بإذن الله"
-            if len(title) > 95:
-                title = f"{rq_name} | {reciter['name']} 🤲"
-            desc = f"""🤲 {rq_name}
-📖 {rq['description']}
-🎙️ القارئ: {res['reciter_name']}
-⏱️ المدة: {int(res['duration'] // 60)}:{int(res['duration'] % 60):02d} دقيقة
-
-رقية شرعية بكتاب الله فقط، صدقة جارية لوجه الله تعالى.
-الشفاء من الله وحده - نسألكم صالح الدعاء لجميع موتى المسلمين. 🤲
-
-#الرقية_الشرعية #رقية_شرعية #قرآن #quran #تلاوة_خاشعة #صدقة_جارية"""
-            tags = ['الرقية الشرعية', 'رقية', 'القرآن الكريم', 'quran',
-                    reciter['name'], 'تحصين', 'صدقة جارية']
+            from seo_engine import generate_ruqyah_seo
+            seo = generate_ruqyah_seo(ruqyah_id=rq["id"],
+                                      ruqyah_name=rq_name,
+                                      ruqyah_desc=rq.get("description", ""),
+                                      duration_seconds=res["duration"],
+                                      ayahs_count=res["ayahs_count"])
+            title = seo["title"]
+            desc = seo["description"]
+            tags = seo["tags"]
             video_id = _upload_long(res["video_path"], title, desc, tags,
                                     thumbnail_path=res.get("thumbnail"))
             if video_id:
