@@ -910,6 +910,9 @@ def run_long_generation(state, test_mode=False):
             import traceback
             logger.error(f"Upload error: {e}")
             logger.error(traceback.format_exc())
+            raise
+    if not test_mode and not video_id:
+        raise RuntimeError("❌ فشل رفع الفيديو لليوتيوب بعد استنفاد محاولات الرفع.")
 
     state["total_generated"] = state.get("total_generated", 0) + 1
     state["last_long_surah"] = surah
@@ -996,6 +999,10 @@ def run_job_surah(state, test_mode=False):
                 cleanup_after_upload(res["video_path"], res.get("thumbnail"))
         except Exception as e:
             logger.error(f"[1/3] upload error: {e}")
+            raise
+
+    if not test_mode and not video_id:
+        raise RuntimeError(f"❌ فشل رفع سورة {surah_clean} إلى يوتيوب.")
 
     job = {"kind": "long_surah", "surah": surah,
            "surah_name": f"سورة {surah_clean}", "ayahs": res["ayahs_count"],
@@ -1052,6 +1059,10 @@ def run_job_compilation(state, test_mode=False):
                 cleanup_after_upload(res["video_path"], res.get("thumbnail"))
         except Exception as e:
             logger.error(f"[2/3] upload error: {e}")
+            raise
+
+    if not test_mode and not video_id:
+        raise RuntimeError(f"❌ فشل رفع تجميعة السور {comp_display} إلى يوتيوب.")
 
     job = {"kind": "compilation", "title": comp_display,
            "ayahs": res["ayahs_count"], "duration": round(res["duration"], 1),
@@ -1109,6 +1120,10 @@ def run_job_ruqyah(state, test_mode=False):
                 cleanup_after_upload(res["video_path"], res.get("thumbnail"))
         except Exception as e:
             logger.error(f"[3/3] upload error: {e}")
+            raise
+
+    if not test_mode and not video_id:
+        raise RuntimeError(f"❌ فشل رفع الرقية الشرعية {rq_name} إلى يوتيوب.")
 
     job = {"kind": "ruqyah", "ruqyah": rq["id"], "title": rq_name,
            "ayahs": res["ayahs_count"], "duration": round(res["duration"], 1),

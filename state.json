@@ -1,9 +1,9 @@
 {
-  "total_generated": 7,
+  "total_generated": 6,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
-  "last_long_surah": 13,
+  "last_long_surah": 8,
   "last_long_reciter_idx": 0,
   "batch_idx": 7,
   "history": [
@@ -58,19 +58,8 @@
       "duration": 581.9,
       "video_id": "QGmY-PpXobo",
       "date": "2026-10-20 18:22:42"
-    },
-    {
-      "kind": "long_surah",
-      "surah": 13,
-      "surah_name": "سورة الرعد",
-      "ayahs": 43,
-      "duration": 998.7,
-      "video_id": null,
-      "date": "2026-10-21 18:32:41"
     }
   ],
-  "daily_cycle_idx": 7,
-  "used_backgrounds": [
-    "106980-674703577_medium.mp4"
-  ]
+  "daily_cycle_idx": 6,
+  "used_backgrounds": []
 }

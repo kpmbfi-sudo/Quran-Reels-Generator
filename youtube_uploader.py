@@ -218,11 +218,32 @@ class YouTubeUploader:
         if len(description) > 5000:
             description = description[:4997] + "..."
 
+        # تنظيف وفحص الكلمات الدلالية لضمان عدم تجاوز حد الـ 500 حرف لدى يوتيوب إطلاقاً
+        clean_tags = []
+        seen_tags = set()
+        total_tag_cost = 0
+        MAX_YT_TAGS_BUDGET = 420  # هامش أمان ممتاز أقل من 500 حرف لحساب يوتيوب
+        for t in (tags or []):
+            if not t:
+                continue
+            t_str = str(t).replace("<", "").replace(">", "").replace(",", "").strip()
+            if not t_str or len(t_str) < 2:
+                continue
+            k = t_str.lower()
+            if k in seen_tags:
+                continue
+            cost = len(t_str) + (2 if " " in t_str else 0) + (1 if clean_tags else 0)
+            if total_tag_cost + cost > MAX_YT_TAGS_BUDGET:
+                break
+            clean_tags.append(t_str)
+            seen_tags.add(k)
+            total_tag_cost += cost
+
         body = {
             "snippet": {
                 "title": title,
                 "description": description,
-                "tags": tags or [],
+                "tags": clean_tags,
                 "categoryId": category_id,
                 "defaultLanguage": "ar",
                 "defaultAudioLanguage": "ar",

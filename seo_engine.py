@@ -46,32 +46,48 @@ def strip_hamza(text: str) -> str:
     return text.translate(table)
 
 
-def build_safe_tags(candidates: List[str], max_chars: int = 480) -> List[str]:
+def sanitize_tag(tag: str) -> str:
+    """تنظيف التاغ من أي رموز غير مسموحة في يوتيوب (مثل < > ,)."""
+    if not tag:
+        return ""
+    for ch in ("<", ">", ","):
+        tag = tag.replace(ch, "")
+    return tag.strip()
+
+
+def build_safe_tags(candidates: List[str], max_chars: int = 400) -> List[str]:
     """
     دمج وترشيح الكلمات المفتاحية (Tags) مع إزالة التكرار،
-    والتأكد الصارم من أن إجمالي عدد الأحرف لا يتجاوز 480 حرفاً
-    (حد يوتيوب هو 500 حرف بما فيها الفواصل، ونستخدم 480 كحد أمان تام لمنع أي خطأ 400).
+    والتأكد الصارم من أن إجمالي عدد الأحرف بحساب يوتيوب لا يتجاوز الحد المسموح.
+
+    ملاحظة تقنية هامة جداً عن يوتيوب:
+    - حد يوتيوب الأقصى هو 500 حرف.
+    - خوارزمية يوتيوب تضيف علامتي تنصيص ("...") خفية (+2 أحرف) لكل كلمة مفتاحية تحتوي على مسافات.
+    - الفاصلة (comma) بين كل تاغ وآخر تحتسب (+1 حرف).
+    - نستخدم 400 كحد أقصى آمن جداً (يوفر هامش أمان 100 حرف) لضمان عدم حدوث خطأ 400 invalidTags إطلاقاً.
     """
     tags: List[str] = []
     seen = set()
     total_len = 0
 
-    for tag in candidates:
-        tag = (tag or "").strip()
+    for raw_tag in candidates:
+        tag = sanitize_tag(raw_tag)
         if not tag or len(tag) < 2:
             continue
         key = tag.lower()
         if key in seen:
             continue
-        # احتساب طول التاج مع الفاصلة (comma)
-        added_len = len(tag) + (1 if tags else 0)
-        if total_len + added_len > max_chars:
+        # احتساب تكلفة التاج الفعلية لدى يوتيوب:
+        # طول التاج + 2 (إذا كان به مسافة) + 1 للفاصلة
+        tag_cost = len(tag) + (2 if " " in tag else 0) + (1 if tags else 0)
+        if total_len + tag_cost > max_chars:
             continue
         tags.append(tag)
         seen.add(key)
-        total_len += added_len
+        total_len += tag_cost
 
     return tags
+
 
 
 def format_duration(seconds: float) -> str:
@@ -163,7 +179,7 @@ def generate_surah_seo(surah_num: int, ayahs_count: int, duration_seconds: float
         f"surah {surah_en.lower()} ahmed al ajamy",
     ]
 
-    tags = build_safe_tags(tag_candidates, max_chars=480)
+    tags = build_safe_tags(tag_candidates, max_chars=400)
 
     return {
         "title": title,
@@ -253,7 +269,7 @@ def generate_ruqyah_seo(ruqyah_id: str, ruqyah_name: str, ruqyah_desc: str,
         "islamic healing"
     ]
 
-    tags = build_safe_tags(tag_candidates, max_chars=480)
+    tags = build_safe_tags(tag_candidates, max_chars=400)
 
     return {
         "title": title,
@@ -339,7 +355,7 @@ def generate_compilation_seo(comp_title: str, duration_seconds: float, ayahs_cou
         "peaceful quran"
     ]
 
-    tags = build_safe_tags(tag_candidates, max_chars=480)
+    tags = build_safe_tags(tag_candidates, max_chars=400)
 
     return {
         "title": title,
