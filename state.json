@@ -1,11 +1,11 @@
 {
-  "total_generated": 7,
+  "total_generated": 8,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
   "last_long_surah": 13,
   "last_long_reciter_idx": 0,
-  "batch_idx": 7,
+  "batch_idx": 8,
   "history": [
     {
       "kind": "long_surah",
@@ -67,10 +67,20 @@
       "duration": 998.7,
       "video_id": "yw53aHT-2rg",
       "date": "2026-10-22 15:47:32"
+    },
+    {
+      "kind": "compilation",
+      "title": "القرآن كلام الله | الرحمن والنبأ والفجر والشمس والضحى",
+      "ayahs": 127,
+      "duration": 657.5,
+      "video_id": "g4WRudD1bpQ",
+      "date": "2026-10-22 18:52:25"
     }
   ],
-  "daily_cycle_idx": 7,
+  "daily_cycle_idx": 8,
   "used_backgrounds": [
-    "106980-674703577_medium.mp4"
-  ]
+    "106980-674703577_medium.mp4",
+    "108292-680195115.mp4"
+  ],
+  "compilation_idx": 8
 }
