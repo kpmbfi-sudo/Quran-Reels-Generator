@@ -23,7 +23,16 @@ Prerequisites:
 import os
 import sys
 import json
+import io
 from pathlib import Path
+
+# Fix Windows console encoding for UTF-8 (Arabic & Emojis)
+if sys.platform == "win32":
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace", line_buffering=True, write_through=True)
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace", line_buffering=True, write_through=True)
+    except Exception:
+        pass
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 CLIENT_SECRET_FILE = SCRIPT_DIR / "client_secret.json"
@@ -109,7 +118,7 @@ def main():
     )
 
     credentials = flow.run_local_server(
-        port=8080,
+        port=0,
         prompt="consent",
         access_type="offline",
     )
