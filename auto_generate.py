@@ -864,10 +864,37 @@ def _upload_long(video_path, title, description, tags, thumbnail_path=None):
     return uploader.upload(video_path, title, description, tags, thumbnail_path=thumbnail_path)
 
 
+def verify_youtube_auth(test_mode=False):
+    """فحص استباقي سريع لمصادقة يوتيوب قبل استهلاك الوقت وموارد الجهاز في توليد الفيديو."""
+    if test_mode:
+        logger.info("🧪 وضع الاختبار مفعل (--test): تم تخطي فحص يوتيوب.")
+        return True
+    logger.info("🔍 جاري التحقق المسبق من صلاحية حساب ورمز يوتيوب (Pre-flight check)...")
+    try:
+        from youtube_uploader import YouTubeUploader
+        uploader = None
+        try:
+            uploader = YouTubeUploader(kind="long")
+        except Exception:
+            uploader = YouTubeUploader()
+        if not uploader or not uploader.youtube:
+            raise RuntimeError("تعذر مصادقة خدمة يوتيوب.")
+        logger.info("✅ تم التحقق من صلاحية مفاتيح يوتيوب بنجاح.")
+        return True
+    except Exception as e:
+        logger.error("=" * 60)
+        logger.error("❌ فشل التحقق من مصادقة يوتيوب قبل بدء المعالجة!")
+        logger.error(f"السبب: {e}")
+        logger.error("=" * 60)
+        raise
+
+
 def run_long_generation(state, test_mode=False):
     """يولّد سورة كاملة طويلة بالمحرك الموحّد ويرفعها لليوتيوب."""
     from quran_engine import render_long_quran_video
     from seo_engine import generate_surah_seo
+
+    verify_youtube_auth(test_mode=test_mode)
 
     surah = pick_next_long_surah(state)
     reciter = pick_next_long_reciter(state)
@@ -969,6 +996,7 @@ def cleanup_after_upload(video_path, thumbnail_path=None):
 
 def run_job_surah(state, test_mode=False):
     """🎬 [1/3] سورة كاملة طويلة بالرسم العثماني بصوت الشيخ العجمي."""
+    verify_youtube_auth(test_mode=test_mode)
     from quran_engine import render_long_quran_video
     reciter = pick_next_long_reciter(state)
     pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
@@ -1018,6 +1046,7 @@ def run_job_surah(state, test_mode=False):
 
 def run_job_compilation(state, test_mode=False):
     """🎬 [2/3] تجميع سور قرآنية متتابعة بصوت الشيخ العجمي."""
+    verify_youtube_auth(test_mode=test_mode)
     from quran_engine import render_long_batch_video
     reciter = pick_next_long_reciter(state)
     pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
@@ -1079,6 +1108,7 @@ def run_job_compilation(state, test_mode=False):
 
 def run_job_ruqyah(state, test_mode=False):
     """🎬 [3/3] رقية شرعية بكتاب الله بصوت الشيخ العجمي."""
+    verify_youtube_auth(test_mode=test_mode)
     from quran_engine import render_long_batch_video
     from ruqyah_data import RUQYAH_TYPES, validate_ruqyah_segments
     from comfort_hooks import RUQYAH_COMFORT_HOOKS

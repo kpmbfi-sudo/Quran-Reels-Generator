@@ -103,9 +103,10 @@ jobs:
           fi
           
           echo "=== Running Quran Video Job: $JOB_ARG ==="
-          python auto_generate.py --job "$JOB_ARG" $TEST_ARG 2>&1 || true
+          python auto_generate.py --job "$JOB_ARG" $TEST_ARG
 
       - name: 💾 Save State
+        if: success()
         run: |
           git config user.name "Quran Reels Bot"
           git config user.email "quran-reels-bot@users.noreply.github.com"
