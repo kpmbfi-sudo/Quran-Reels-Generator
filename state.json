@@ -1,11 +1,11 @@
 {
-  "total_generated": 14,
+  "total_generated": 15,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
   "last_long_surah": 22,
   "last_long_reciter_idx": 0,
-  "batch_idx": 10,
+  "batch_idx": 11,
   "history": [
     {
       "kind": "long_surah",
@@ -127,9 +127,18 @@
       "duration": 1674.5,
       "video_id": "NrMXGYxGxLM",
       "date": "2026-10-29 19:44:48"
+    },
+    {
+      "kind": "ruqyah",
+      "ruqyah": "sleep",
+      "title": "رقية النوم والسكينة",
+      "ayahs": 39,
+      "duration": 331.6,
+      "video_id": "5M3FJlBgq94",
+      "date": "2026-10-30 19:02:00"
     }
   ],
-  "daily_cycle_idx": 14,
+  "daily_cycle_idx": 15,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -141,8 +150,9 @@
     "123855-729425455_medium.mp4",
     "126997-737419656_medium.mp4",
     "127850-739487680_medium.mp4",
-    "149897-797491512_medium.mp4"
+    "149897-797491512_medium.mp4",
+    "150144-797999285_medium.mp4"
   ],
   "compilation_idx": 10,
-  "ruqyah_idx": 10
+  "ruqyah_idx": 11
 }
