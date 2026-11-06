@@ -1,9 +1,9 @@
 {
-  "total_generated": 21,
+  "total_generated": 22,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
-  "last_long_surah": 25,
+  "last_long_surah": 29,
   "last_long_reciter_idx": 0,
   "batch_idx": 13,
   "history": [
@@ -188,9 +188,18 @@
       "duration": 581.8,
       "video_id": "LE5uwme8wy8",
       "date": "2026-11-05 21:01:57"
+    },
+    {
+      "kind": "long_surah",
+      "surah": 29,
+      "surah_name": "سورة العنكبوت",
+      "ayahs": 69,
+      "duration": 1253.5,
+      "video_id": "wzNUlRwmX4M",
+      "date": "2026-11-06 20:33:15"
     }
   ],
-  "daily_cycle_idx": 21,
+  "daily_cycle_idx": 22,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -209,7 +218,8 @@
     "151685-801443637_medium.mp4",
     "153846-806178259_medium.mp4",
     "159948-820010982_medium.mp4",
-    "164909-831371207.mp4"
+    "164909-831371207.mp4",
+    "165056-831554949_medium.mp4"
   ],
   "compilation_idx": 12,
   "ruqyah_idx": 13
