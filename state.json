@@ -1,9 +1,9 @@
 {
-  "total_generated": 24,
+  "total_generated": 25,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
-  "last_long_surah": 29,
+  "last_long_surah": 30,
   "last_long_reciter_idx": 0,
   "batch_idx": 14,
   "history": [
@@ -214,9 +214,18 @@
       "duration": 256.1,
       "video_id": "Bd-8t-a5drg",
       "date": "2026-11-08 18:40:51"
+    },
+    {
+      "kind": "long_surah",
+      "surah": 30,
+      "surah_name": "سورة الروم",
+      "ayahs": 60,
+      "duration": 1049.4,
+      "video_id": "n1WKjn-6Eo4",
+      "date": "2026-11-09 23:26:33"
     }
   ],
-  "daily_cycle_idx": 24,
+  "daily_cycle_idx": 25,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -238,7 +247,8 @@
     "164909-831371207.mp4",
     "165056-831554949_medium.mp4",
     "170684-843752768_medium.mp4",
-    "173291-849202438_medium.mp4"
+    "173291-849202438_medium.mp4",
+    "173536-849645897.mp4"
   ],
   "compilation_idx": 13,
   "ruqyah_idx": 14
