@@ -1,11 +1,11 @@
 {
-  "total_generated": 26,
+  "total_generated": 27,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
   "last_long_surah": 30,
   "last_long_reciter_idx": 0,
-  "batch_idx": 14,
+  "batch_idx": 15,
   "history": [
     {
       "kind": "long_surah",
@@ -231,9 +231,18 @@
       "duration": 1252.3,
       "video_id": "HiSsDgjVhyg",
       "date": "2026-11-10 20:51:46"
+    },
+    {
+      "kind": "ruqyah",
+      "ruqyah": "sihr",
+      "title": "رقية السحر وإبطاله",
+      "ayahs": 32,
+      "duration": 224.8,
+      "video_id": "LoUp0JppzMo",
+      "date": "2026-11-11 21:04:19"
     }
   ],
-  "daily_cycle_idx": 26,
+  "daily_cycle_idx": 27,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -257,8 +266,9 @@
     "170684-843752768_medium.mp4",
     "173291-849202438_medium.mp4",
     "173536-849645897.mp4",
-    "174590-851804342_medium.mp4"
+    "174590-851804342_medium.mp4",
+    "177061-856658345_medium.mp4"
   ],
   "compilation_idx": 14,
-  "ruqyah_idx": 14
+  "ruqyah_idx": 15
 }
