@@ -1,5 +1,5 @@
 {
-  "total_generated": 28,
+  "total_generated": 29,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
@@ -249,9 +249,17 @@
       "duration": 647.6,
       "video_id": "YTYNwTTpxQo",
       "date": "2026-11-12 21:22:48"
+    },
+    {
+      "kind": "compilation",
+      "title": "سور الجنة والنار | الواقعة والطارق والغاشية والزلزلة والقارعة",
+      "ayahs": 88,
+      "duration": 367.2,
+      "video_id": "FaOY2X5rfT4",
+      "date": "2026-11-13 20:51:01"
     }
   ],
-  "daily_cycle_idx": 28,
+  "daily_cycle_idx": 29,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -277,8 +285,9 @@
     "173536-849645897.mp4",
     "174590-851804342_medium.mp4",
     "177061-856658345_medium.mp4",
-    "17902-286460938_medium.mp4"
+    "17902-286460938_medium.mp4",
+    "1808-150713272_medium.mp4"
   ],
-  "compilation_idx": 14,
+  "compilation_idx": 15,
   "ruqyah_idx": 15
 }
