@@ -1,11 +1,11 @@
 {
-  "total_generated": 29,
+  "total_generated": 30,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
   "last_long_surah": 31,
   "last_long_reciter_idx": 0,
-  "batch_idx": 15,
+  "batch_idx": 16,
   "history": [
     {
       "kind": "long_surah",
@@ -257,9 +257,18 @@
       "duration": 367.2,
       "video_id": "FaOY2X5rfT4",
       "date": "2026-11-13 20:51:01"
+    },
+    {
+      "kind": "ruqyah",
+      "ruqyah": "jinn",
+      "title": "رقية المس والجن والتحصين",
+      "ayahs": 54,
+      "duration": 522.0,
+      "video_id": "H3Q65yOjHWA",
+      "date": "2026-11-14 18:58:20"
     }
   ],
-  "daily_cycle_idx": 29,
+  "daily_cycle_idx": 30,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -286,8 +295,9 @@
     "174590-851804342_medium.mp4",
     "177061-856658345_medium.mp4",
     "17902-286460938_medium.mp4",
-    "1808-150713272_medium.mp4"
+    "1808-150713272_medium.mp4",
+    "187387-880363230.mp4"
   ],
   "compilation_idx": 15,
-  "ruqyah_idx": 15
+  "ruqyah_idx": 16
 }
