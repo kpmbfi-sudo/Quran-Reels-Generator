@@ -1,9 +1,9 @@
 {
-  "total_generated": 30,
+  "total_generated": 31,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
-  "last_long_surah": 31,
+  "last_long_surah": 32,
   "last_long_reciter_idx": 0,
   "batch_idx": 16,
   "history": [
@@ -266,9 +266,18 @@
       "duration": 522.0,
       "video_id": "H3Q65yOjHWA",
       "date": "2026-11-14 18:58:20"
+    },
+    {
+      "kind": "long_surah",
+      "surah": 32,
+      "surah_name": "سورة السجدة",
+      "ayahs": 30,
+      "duration": 478.6,
+      "video_id": "WK5lJsJJnzc",
+      "date": "2026-11-15 19:35:29"
     }
   ],
-  "daily_cycle_idx": 30,
+  "daily_cycle_idx": 31,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -296,7 +305,8 @@
     "177061-856658345_medium.mp4",
     "17902-286460938_medium.mp4",
     "1808-150713272_medium.mp4",
-    "187387-880363230.mp4"
+    "187387-880363230.mp4",
+    "1971-152947486_medium.mp4"
   ],
   "compilation_idx": 15,
   "ruqyah_idx": 16
