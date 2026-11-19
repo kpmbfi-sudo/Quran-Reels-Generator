@@ -1,5 +1,5 @@
 {
-  "total_generated": 34,
+  "total_generated": 35,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
@@ -301,9 +301,17 @@
       "duration": 1477.2,
       "video_id": "r9g9r7wFbJg",
       "date": "2026-11-18 21:53:59"
+    },
+    {
+      "kind": "compilation",
+      "title": "خواتيم القرآن الكريم | جزء عمَّ المختصر",
+      "ayahs": 119,
+      "duration": 525.0,
+      "video_id": "geP5J0aEkIs",
+      "date": "2026-11-19 22:06:55"
     }
   ],
-  "daily_cycle_idx": 34,
+  "daily_cycle_idx": 35,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -335,8 +343,9 @@
     "1971-152947486_medium.mp4",
     "210707_medium.mp4",
     "211542_medium.mp4",
-    "213923_medium.mp4"
+    "213923_medium.mp4",
+    "216134_medium.mp4"
   ],
-  "compilation_idx": 16,
+  "compilation_idx": 17,
   "ruqyah_idx": 17
 }
