@@ -1,9 +1,9 @@
 {
-  "total_generated": 36,
+  "total_generated": 37,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
-  "last_long_surah": 33,
+  "last_long_surah": 34,
   "last_long_reciter_idx": 0,
   "batch_idx": 18,
   "history": [
@@ -318,9 +318,18 @@
       "duration": 465.3,
       "video_id": "mtGO7shkl_8",
       "date": "2026-11-20 21:53:20"
+    },
+    {
+      "kind": "long_surah",
+      "surah": 34,
+      "surah_name": "سورة سبأ",
+      "ayahs": 54,
+      "duration": 1031.6,
+      "video_id": "ddeOn1wtGKg",
+      "date": "2026-11-21 20:27:04"
     }
   ],
-  "daily_cycle_idx": 36,
+  "daily_cycle_idx": 37,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -354,7 +363,8 @@
     "211542_medium.mp4",
     "213923_medium.mp4",
     "216134_medium.mp4",
-    "222008_medium.mp4"
+    "222008_medium.mp4",
+    "225414_medium.mp4"
   ],
   "compilation_idx": 17,
   "ruqyah_idx": 18
