@@ -1,5 +1,5 @@
 {
-  "total_generated": 37,
+  "total_generated": 38,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
@@ -327,9 +327,17 @@
       "duration": 1031.6,
       "video_id": "ddeOn1wtGKg",
       "date": "2026-11-21 20:27:04"
+    },
+    {
+      "kind": "compilation",
+      "title": "السور الخمس العظيمة | يس والرحمن والواقعة والملك والنبأ",
+      "ayahs": 210,
+      "duration": 1674.5,
+      "video_id": "VpIhmfw-MxY",
+      "date": "2026-11-22 20:45:17"
     }
   ],
-  "daily_cycle_idx": 37,
+  "daily_cycle_idx": 38,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -364,8 +372,9 @@
     "213923_medium.mp4",
     "216134_medium.mp4",
     "222008_medium.mp4",
-    "225414_medium.mp4"
+    "225414_medium.mp4",
+    "225952_medium.mp4"
   ],
-  "compilation_idx": 17,
+  "compilation_idx": 18,
   "ruqyah_idx": 18
 }
