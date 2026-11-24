@@ -1,11 +1,11 @@
 {
-  "total_generated": 38,
+  "total_generated": 39,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
   "last_long_surah": 34,
   "last_long_reciter_idx": 0,
-  "batch_idx": 18,
+  "batch_idx": 19,
   "history": [
     {
       "kind": "long_surah",
@@ -335,9 +335,18 @@
       "duration": 1674.5,
       "video_id": "VpIhmfw-MxY",
       "date": "2026-11-22 20:45:17"
+    },
+    {
+      "kind": "ruqyah",
+      "ruqyah": "complete",
+      "title": "الرقية الشرعية الشاملة",
+      "ayahs": 61,
+      "duration": 581.8,
+      "video_id": "kR2sVExHYwk",
+      "date": "2026-11-24 01:31:54"
     }
   ],
-  "daily_cycle_idx": 38,
+  "daily_cycle_idx": 39,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -373,8 +382,9 @@
     "216134_medium.mp4",
     "222008_medium.mp4",
     "225414_medium.mp4",
-    "225952_medium.mp4"
+    "225952_medium.mp4",
+    "23668-336607590_medium.mp4"
   ],
   "compilation_idx": 18,
-  "ruqyah_idx": 18
+  "ruqyah_idx": 19
 }
