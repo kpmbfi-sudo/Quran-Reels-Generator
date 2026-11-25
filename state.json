@@ -1,5 +1,5 @@
 {
-  "total_generated": 40,
+  "total_generated": 41,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
@@ -353,9 +353,17 @@
       "duration": 881.9,
       "video_id": "rV3PxnBZ5qA",
       "date": "2026-11-24 23:27:05"
+    },
+    {
+      "kind": "compilation",
+      "title": "سور الفجر والطمأنينة | الفجر والضحى والشرح والقدر والزلزلة",
+      "ayahs": 62,
+      "duration": 307.9,
+      "video_id": "jA1lHzu_2uA",
+      "date": "2026-11-25 22:57:06"
     }
   ],
-  "daily_cycle_idx": 40,
+  "daily_cycle_idx": 41,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -393,8 +401,9 @@
     "225414_medium.mp4",
     "225952_medium.mp4",
     "23668-336607590_medium.mp4",
-    "236711_medium.mp4"
+    "236711_medium.mp4",
+    "257593_medium.mp4"
   ],
-  "compilation_idx": 18,
+  "compilation_idx": 19,
   "ruqyah_idx": 19
 }
