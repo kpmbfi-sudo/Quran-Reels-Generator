@@ -1,11 +1,11 @@
 {
-  "total_generated": 41,
+  "total_generated": 42,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
   "last_long_surah": 35,
   "last_long_reciter_idx": 0,
-  "batch_idx": 19,
+  "batch_idx": 20,
   "history": [
     {
       "kind": "long_surah",
@@ -361,9 +361,18 @@
       "duration": 307.9,
       "video_id": "jA1lHzu_2uA",
       "date": "2026-11-25 22:57:06"
+    },
+    {
+      "kind": "ruqyah",
+      "ruqyah": "hasad",
+      "title": "رقية الحسد والعين",
+      "ayahs": 28,
+      "duration": 256.1,
+      "video_id": "Yg2yx9drEm4",
+      "date": "2026-11-26 22:47:29"
     }
   ],
-  "daily_cycle_idx": 41,
+  "daily_cycle_idx": 42,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -402,8 +411,9 @@
     "225952_medium.mp4",
     "23668-336607590_medium.mp4",
     "236711_medium.mp4",
-    "257593_medium.mp4"
+    "257593_medium.mp4",
+    "289687_medium.mp4"
   ],
   "compilation_idx": 19,
-  "ruqyah_idx": 19
+  "ruqyah_idx": 20
 }
