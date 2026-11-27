@@ -1,9 +1,9 @@
 {
-  "total_generated": 42,
+  "total_generated": 43,
   "last_reciter_idx": 0,
   "last_surah": 1,
   "last_ayah": 0,
-  "last_long_surah": 35,
+  "last_long_surah": 39,
   "last_long_reciter_idx": 0,
   "batch_idx": 20,
   "history": [
@@ -370,9 +370,18 @@
       "duration": 256.1,
       "video_id": "Yg2yx9drEm4",
       "date": "2026-11-26 22:47:29"
+    },
+    {
+      "kind": "long_surah",
+      "surah": 39,
+      "surah_name": "سورة الزمر",
+      "ayahs": 75,
+      "duration": 1402.8,
+      "video_id": "9b0S-PfLeAM",
+      "date": "2026-11-27 22:39:24"
     }
   ],
-  "daily_cycle_idx": 42,
+  "daily_cycle_idx": 43,
   "used_backgrounds": [
     "106980-674703577_medium.mp4",
     "108292-680195115.mp4",
@@ -412,7 +421,8 @@
     "23668-336607590_medium.mp4",
     "236711_medium.mp4",
     "257593_medium.mp4",
-    "289687_medium.mp4"
+    "289687_medium.mp4",
+    "330898_medium.mp4"
   ],
   "compilation_idx": 19,
   "ruqyah_idx": 20
